@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
 import { GeminiService } from './services/gemini.service';
 import { Chat, GenerateContentResponse } from '@google/genai';
+import { DatePipe } from '@angular/common';
 
 interface Scene {
   sceneNumber: number;
@@ -11,7 +12,7 @@ interface Scene {
   isRegeneratingText?: boolean;
   isEnhancingPrompt?: boolean;
   statusMessage?: string;
-  errorMessage?: string; // New property for user-facing errors
+  errorMessage?: string; 
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
 }
 
@@ -20,9 +21,25 @@ interface ChatMessage {
   text: string;
 }
 
+// Data shape for a single version
+interface ProjectData {
+  script: string;
+  scenes: Scene[];
+  aspectRatio: string;
+  resolution: string;
+  timestamp: number;
+}
+
+interface ProjectSnapshot {
+  id: string;
+  name: string;
+  timestamp: number;
+  data: ProjectData;
+}
+
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [DatePipe], // Import DatePipe for the template
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -57,6 +74,10 @@ export class AppComponent {
   // Drag and Drop State
   draggedIndex = signal<number | null>(null);
   dragOverIndex = signal<number | null>(null);
+
+  // Versioning/History State
+  projectHistory = signal<ProjectSnapshot[]>([]);
+  isHistoryOpen = signal<boolean>(false);
   
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
@@ -69,12 +90,14 @@ export class AppComponent {
   // --- Persistence Logic ---
 
   saveProject() {
+    // When saving manually, we also persist the history
     const data = {
       script: this.scriptText(),
       scenes: this.scenes(),
       aspectRatio: this.selectedAspectRatio(),
       resolution: this.selectedResolution(),
-      chatHistory: this.chatMessages() // Optional: save chat too
+      chatHistory: this.chatMessages(),
+      projectHistory: this.projectHistory() // Save the versions too
     };
 
     try {
@@ -96,12 +119,15 @@ export class AppComponent {
       if (raw) {
         const data = JSON.parse(raw);
         
-        // Restore state
+        // Restore current state
         if (data.script) this.scriptText.set(data.script);
         if (data.scenes) this.scenes.set(data.scenes);
         if (data.aspectRatio) this.selectedAspectRatio.set(data.aspectRatio);
         if (data.resolution) this.selectedResolution.set(data.resolution);
         if (data.chatHistory) this.chatMessages.set(data.chatHistory);
+        
+        // Restore history if it exists
+        if (data.projectHistory) this.projectHistory.set(data.projectHistory);
 
         this.showNotification('Project loaded successfully');
         this.triggerUpdate();
@@ -121,6 +147,63 @@ export class AppComponent {
       this.notification.set(null);
       this.triggerUpdate();
     }, 3000);
+  }
+
+  // --- Versioning / Snapshots ---
+
+  toggleHistory() {
+    this.isHistoryOpen.update(v => !v);
+    this.triggerUpdate();
+  }
+
+  createSnapshot(customName?: string) {
+    const timestamp = Date.now();
+    const sceneCount = this.scenes().length;
+    const name = customName || `Snapshot: ${sceneCount} Scenes`;
+
+    const snapshotData: ProjectData = {
+      script: this.scriptText(),
+      scenes: JSON.parse(JSON.stringify(this.scenes())), // Deep copy
+      aspectRatio: this.selectedAspectRatio(),
+      resolution: this.selectedResolution(),
+      timestamp
+    };
+
+    const newSnapshot: ProjectSnapshot = {
+      id: crypto.randomUUID(),
+      name,
+      timestamp,
+      data: snapshotData
+    };
+
+    // Add to history (newest first)
+    this.projectHistory.update(history => [newSnapshot, ...history]);
+    this.showNotification('Version snapshot created');
+    
+    // Auto-save to local storage so history persists
+    this.saveProject();
+  }
+
+  restoreSnapshot(snapshot: ProjectSnapshot) {
+    if (!confirm('Are you sure? This will overwrite your current workspace with this snapshot.')) return;
+
+    const data = snapshot.data;
+    this.scriptText.set(data.script);
+    this.scenes.set(JSON.parse(JSON.stringify(data.scenes))); // Deep copy back
+    this.selectedAspectRatio.set(data.aspectRatio);
+    this.selectedResolution.set(data.resolution);
+    
+    this.isHistoryOpen.set(false);
+    this.showNotification(`Restored version from ${new Date(snapshot.timestamp).toLocaleTimeString()}`);
+    this.triggerUpdate();
+  }
+
+  deleteSnapshot(id: string, event: Event) {
+    event.stopPropagation(); // Prevent triggering restore
+    if (!confirm('Delete this snapshot?')) return;
+    
+    this.projectHistory.update(h => h.filter(s => s.id !== id));
+    this.saveProject(); // Update storage
   }
 
   // --- Drag and Drop Logic ---
@@ -185,6 +268,11 @@ export class AppComponent {
 
   async analyzeScript() {
     if (!this.scriptText()) return;
+
+    // Auto-snapshot before major changes
+    if (this.scenes().length > 0) {
+      this.createSnapshot('Auto-save: Before Analysis');
+    }
 
     this.isAnalyzing.set(true);
     this.scenes.set([]); 
