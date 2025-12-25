@@ -48,6 +48,9 @@ export class AppComponent {
   chatMessages = signal<ChatMessage[]>([]);
   isChatSending = signal<boolean>(false);
   private chatSession: Chat | null = null;
+
+  // Notification State
+  notification = signal<string | null>(null);
   
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
@@ -55,6 +58,63 @@ export class AppComponent {
     // Initialize Chat
     this.chatSession = this.geminiService.getChatModel();
     this.addBotMessage("Hello! I'm your Storyboard Assistant. How can I help you with your script today?");
+  }
+
+  // --- Persistence Logic ---
+
+  saveProject() {
+    const data = {
+      script: this.scriptText(),
+      scenes: this.scenes(),
+      aspectRatio: this.selectedAspectRatio(),
+      resolution: this.selectedResolution(),
+      chatHistory: this.chatMessages() // Optional: save chat too
+    };
+
+    try {
+      localStorage.setItem('STORYBOARD_AI_DATA', JSON.stringify(data));
+      this.showNotification('Project saved successfully');
+    } catch (e: any) {
+      console.error('Save failed', e);
+      if (e.name === 'QuotaExceededError') {
+        this.showNotification('Error: Project is too large to save (image limit).');
+      } else {
+        this.showNotification('Failed to save project.');
+      }
+    }
+  }
+
+  loadProject() {
+    try {
+      const raw = localStorage.getItem('STORYBOARD_AI_DATA');
+      if (raw) {
+        const data = JSON.parse(raw);
+        
+        // Restore state
+        if (data.script) this.scriptText.set(data.script);
+        if (data.scenes) this.scenes.set(data.scenes);
+        if (data.aspectRatio) this.selectedAspectRatio.set(data.aspectRatio);
+        if (data.resolution) this.selectedResolution.set(data.resolution);
+        if (data.chatHistory) this.chatMessages.set(data.chatHistory);
+
+        this.showNotification('Project loaded successfully');
+        this.triggerUpdate();
+      } else {
+        this.showNotification('No saved project found.');
+      }
+    } catch (e) {
+      console.error('Load failed', e);
+      this.showNotification('Failed to load project data.');
+    }
+  }
+
+  showNotification(message: string) {
+    this.notification.set(message);
+    this.triggerUpdate();
+    setTimeout(() => {
+      this.notification.set(null);
+      this.triggerUpdate();
+    }, 3000);
   }
 
   // --- Storyboard Logic ---
