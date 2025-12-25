@@ -11,6 +11,7 @@ interface Scene {
   isRegeneratingText?: boolean;
   isEnhancingPrompt?: boolean;
   statusMessage?: string;
+  errorMessage?: string; // New property for user-facing errors
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
 }
 
@@ -129,7 +130,6 @@ export class AppComponent {
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', index.toString());
-      // Make the drag ghost image a bit transparent if possible, or just rely on browser default
     }
   }
 
@@ -165,8 +165,7 @@ export class AppComponent {
   }
   
   onDragLeave(event: DragEvent) {
-      // Optional: Logic to clear dragOver if leaving the list entirely
-      // For individual items, we rely on dragOver of the new item taking precedence
+    // Optional
   }
 
   private resetDragState() {
@@ -199,6 +198,7 @@ export class AppComponent {
         isRegeneratingText: false, 
         isEnhancingPrompt: false,
         statusMessage: '',
+        errorMessage: undefined,
         promptHistory: [] 
       })));
       
@@ -206,7 +206,8 @@ export class AppComponent {
       this.generateAllImages();
       
     } catch (error) {
-      alert('Failed to analyze script. Please try again.');
+      // For script analysis, we use the main notification/alert as it's a global failure
+      this.showNotification('Failed to analyze script. Please check your API key or try again.');
       console.error(error);
     } finally {
       this.isAnalyzing.set(false);
@@ -217,7 +218,10 @@ export class AppComponent {
   async regenerateSceneText(scene: Scene) {
     if (scene.isRegeneratingText || !this.scriptText()) return;
 
-    this.updateSceneState(scene.sceneNumber, { isRegeneratingText: true });
+    this.updateSceneState(scene.sceneNumber, { 
+      isRegeneratingText: true, 
+      errorMessage: undefined // Clear previous errors
+    });
 
     try {
       const result = await this.geminiService.regenerateScene(this.scriptText(), scene.sceneNumber);
@@ -234,15 +238,20 @@ export class AppComponent {
       });
     } catch (error) {
       console.error(error);
-      this.updateSceneState(scene.sceneNumber, { isRegeneratingText: false });
-      alert(`Failed to regenerate text for Scene ${scene.sceneNumber}`);
+      this.updateSceneState(scene.sceneNumber, { 
+        isRegeneratingText: false,
+        errorMessage: 'Text generation failed. Please try again.'
+      });
     }
   }
 
   async enhancePromptForScene(scene: Scene) {
     if (scene.isEnhancingPrompt || scene.isGenerating) return;
 
-    this.updateSceneState(scene.sceneNumber, { isEnhancingPrompt: true });
+    this.updateSceneState(scene.sceneNumber, { 
+      isEnhancingPrompt: true,
+      errorMessage: undefined 
+    });
 
     try {
       const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
@@ -261,8 +270,10 @@ export class AppComponent {
       }
     } catch (error) {
       console.error(error);
-      this.updateSceneState(scene.sceneNumber, { isEnhancingPrompt: false });
-      this.showNotification('Failed to enhance prompt');
+      this.updateSceneState(scene.sceneNumber, { 
+        isEnhancingPrompt: false,
+        errorMessage: 'Prompt enhancement failed.'
+      });
     }
   }
 
@@ -270,7 +281,11 @@ export class AppComponent {
     if (scene.isGenerating) return;
 
     // Update specific scene state
-    this.updateSceneState(scene.sceneNumber, { isGenerating: true, statusMessage: 'Enhancing prompt...' });
+    this.updateSceneState(scene.sceneNumber, { 
+      isGenerating: true, 
+      statusMessage: 'Enhancing prompt...',
+      errorMessage: undefined 
+    });
 
     try {
       // 1. Enhance the prompt first
@@ -301,20 +316,30 @@ export class AppComponent {
         statusMessage: undefined
       });
 
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error('Image Generation Error:', error);
+      
+      let friendlyError = 'Image generation failed.';
+      if (error.message?.includes('429')) {
+        friendlyError = 'Usage limit exceeded. Please wait a moment.';
+      } else if (error.message?.includes('safety')) {
+        friendlyError = 'Generation blocked by safety settings. Try a different prompt.';
+      } else {
+         friendlyError = 'Connection interrupted. Please retry.';
+      }
+
       this.updateSceneState(scene.sceneNumber, { 
         isGenerating: false,
-        statusMessage: 'Failed'
+        statusMessage: 'Failed',
+        errorMessage: friendlyError
       });
-      // alert(`Failed to generate image for Scene ${scene.sceneNumber}`); // Reduce alert noise
     }
   }
 
   async generateAllImages() {
     const currentScenes = this.scenes();
     for (const scene of currentScenes) {
-      if (!scene.imageUrl) {
+      if (!scene.imageUrl && !scene.isGenerating) {
         await this.generateImageForScene(scene);
       }
     }
@@ -330,7 +355,8 @@ export class AppComponent {
       visualPrompt: previous.prompt,
       imageUrl: previous.imageUrl,
       promptHistory: newHistory,
-      statusMessage: undefined // Reset any error/status messages
+      statusMessage: undefined,
+      errorMessage: undefined
     });
   }
 

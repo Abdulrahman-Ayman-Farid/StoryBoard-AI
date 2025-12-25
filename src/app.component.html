@@ -154,7 +154,7 @@
           <div class="relative mb-6">
             <div class="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 rounded-full animate-pulse"></div>
             <svg xmlns="http://www.w3.org/2000/svg" class="relative h-24 w-24 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
           <p class="text-white/30 text-lg font-light tracking-wide">Ready to visualize your narrative.</p>
@@ -247,9 +247,25 @@
                         </div>
                       </div>
                     } @else {
-                      <button (click)="generateImageForScene(scene)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_20px_rgba(79,70,229,0.2)] disabled:opacity-50 disabled:cursor-not-allowed">
-                        Generate Frame
-                      </button>
+                      @if (scene.errorMessage && !scene.imageUrl) {
+                        <!-- Error State Overlay for Empty Image -->
+                        <div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-900/20 backdrop-blur-sm p-6 text-center animate-fade-in">
+                          <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3 border border-red-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <p class="text-red-200 font-medium text-sm mb-1">Generation Interrupted</p>
+                          <p class="text-red-200/60 text-xs mb-4 max-w-[200px]">{{ scene.errorMessage }}</p>
+                          <button (click)="generateImageForScene(scene)" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-colors">
+                            Try Again
+                          </button>
+                        </div>
+                      } @else {
+                        <button (click)="generateImageForScene(scene)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_20px_rgba(79,70,229,0.2)] disabled:opacity-50 disabled:cursor-not-allowed">
+                          Generate Frame
+                        </button>
+                      }
                     }
                   </div>
                 }
@@ -286,6 +302,16 @@
                         }
                     </button>
                 </div>
+
+                <!-- Text Generation Error Inline -->
+                @if (scene.errorMessage && !scene.imageUrl && !scene.isGenerating) {
+                  <!-- Handled in image area -->
+                } @else if (scene.errorMessage) {
+                   <div class="mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-2">
+                      <span class="text-xs text-red-300">{{ scene.errorMessage }}</span>
+                      <button (click)="scene.errorMessage?.includes('Prompt') ? enhancePromptForScene(scene) : regenerateSceneText(scene)" class="text-xs text-red-200 hover:text-white underline decoration-red-500/50">Retry</button>
+                   </div>
+                }
 
                 <div class="relative group/prompt cursor-help">
                   <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover/prompt:opacity-100 transition-opacity"></div>
