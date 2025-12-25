@@ -232,6 +232,22 @@
                 <div class="relative group/prompt cursor-help">
                   <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover/prompt:opacity-100 transition-opacity"></div>
                   <div class="relative bg-black/30 p-3 rounded-xl border border-white/5">
+                    
+                    <!-- History Controls -->
+                    <div class="flex justify-between items-center mb-2 border-b border-white/5 pb-2">
+                       <span class="text-[10px] uppercase tracking-wider text-indigo-400 font-bold">
+                         Prompt v{{ (scene.promptHistory?.length || 0) + 1 }}
+                       </span>
+                       @if (scene.promptHistory && scene.promptHistory.length > 0) {
+                         <button (click)="revertToPreviousVersion(scene)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                           Revert
+                         </button>
+                       }
+                    </div>
+
                     @if (scene.isRegeneratingText) {
                          <div class="h-4 w-3/4 bg-white/10 rounded animate-pulse mb-2"></div>
                          <div class="h-4 w-1/2 bg-white/10 rounded animate-pulse"></div>

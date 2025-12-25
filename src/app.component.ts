@@ -10,6 +10,7 @@ interface Scene {
   isGenerating?: boolean;
   isRegeneratingText?: boolean;
   statusMessage?: string;
+  promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
 }
 
 interface ChatMessage {
@@ -67,7 +68,13 @@ export class AppComponent {
 
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
-      this.scenes.set(result.map((s: any) => ({ ...s, isGenerating: false, isRegeneratingText: false, statusMessage: '' })));
+      this.scenes.set(result.map((s: any) => ({ 
+        ...s, 
+        isGenerating: false, 
+        isRegeneratingText: false, 
+        statusMessage: '',
+        promptHistory: [] 
+      })));
       
       // Automatically generate images for all new scenes
       this.generateAllImages();
@@ -88,11 +95,16 @@ export class AppComponent {
 
     try {
       const result = await this.geminiService.regenerateScene(this.scriptText(), scene.sceneNumber);
+      
+      // Capture history before update
+      const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
+
       this.updateSceneState(scene.sceneNumber, {
         description: result.description,
         visualPrompt: result.visualPrompt,
         imageUrl: undefined, // Clear image as prompt changed
-        isRegeneratingText: false
+        isRegeneratingText: false,
+        promptHistory: [...(scene.promptHistory || []), historyItem]
       });
     } catch (error) {
       console.error(error);
@@ -111,10 +123,18 @@ export class AppComponent {
       // 1. Enhance the prompt first
       const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
       
+      // Capture history if prompt changed (it almost always does)
+      let historyUpdate = {};
+      if (enhancedPrompt !== scene.visualPrompt) {
+         const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
+         historyUpdate = { promptHistory: [...(scene.promptHistory || []), historyItem] };
+      }
+      
       // Update the scene with the enhanced prompt so the user sees what was used
       this.updateSceneState(scene.sceneNumber, { 
         visualPrompt: enhancedPrompt,
-        statusMessage: 'Rendering image...'
+        statusMessage: 'Rendering image...',
+        ...historyUpdate
       });
 
       // 2. Generate the image
@@ -140,14 +160,25 @@ export class AppComponent {
 
   async generateAllImages() {
     const currentScenes = this.scenes();
-    
-    // We can run these in parallel chunks to speed it up, or strictly sequential.
-    // Sequential is safer for rate limits and simpler to reason about status updates.
     for (const scene of currentScenes) {
       if (!scene.imageUrl) {
         await this.generateImageForScene(scene);
       }
     }
+  }
+
+  revertToPreviousVersion(scene: Scene) {
+    if (!scene.promptHistory || scene.promptHistory.length === 0) return;
+    
+    const previous = scene.promptHistory[scene.promptHistory.length - 1];
+    const newHistory = scene.promptHistory.slice(0, -1);
+    
+    this.updateSceneState(scene.sceneNumber, {
+      visualPrompt: previous.prompt,
+      imageUrl: previous.imageUrl,
+      promptHistory: newHistory,
+      statusMessage: undefined // Reset any error/status messages
+    });
   }
 
   private updateSceneState(sceneNumber: number, updates: Partial<Scene>) {
