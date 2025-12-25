@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, inject, signal, ChangeDetectionStrategy, ElementRef, ViewChild } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
 import { GeminiService } from './services/gemini.service';
 import { Chat, GenerateContentResponse } from '@google/genai';
 
@@ -22,8 +22,8 @@ interface ChatMessage {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
-  geminiService = inject(GeminiService);
-  cdr = inject(ChangeDetectorRef);
+  private geminiService = inject(GeminiService);
+  private appRef = inject(ApplicationRef);
 
   // Script State
   scriptText = signal<string>('');
@@ -56,7 +56,7 @@ export class AppComponent {
 
     this.isAnalyzing.set(true);
     this.scenes.set([]); 
-    this.safeDetectChanges();
+    this.triggerUpdate();
 
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
@@ -66,7 +66,7 @@ export class AppComponent {
       console.error(error);
     } finally {
       this.isAnalyzing.set(false);
-      this.safeDetectChanges();
+      this.triggerUpdate();
     }
   }
 
@@ -103,14 +103,14 @@ export class AppComponent {
     this.scenes.update(prev => 
       prev.map(s => s.sceneNumber === sceneNumber ? { ...s, ...updates } : s)
     );
-    this.safeDetectChanges();
+    this.triggerUpdate();
   }
 
   // --- Chat Logic ---
 
   toggleChat() {
     this.isChatOpen.update(v => !v);
-    this.safeDetectChanges();
+    this.triggerUpdate();
   }
 
   async sendChatMessage() {
@@ -121,7 +121,7 @@ export class AppComponent {
     this.chatMessages.update(msgs => [...msgs, { role: 'user', text }]);
     this.chatInput.set('');
     this.isChatSending.set(true);
-    this.safeDetectChanges();
+    this.triggerUpdate();
     this.scrollToBottom();
 
     try {
@@ -137,14 +137,14 @@ export class AppComponent {
       this.addBotMessage("Sorry, I encountered an error. Please try again.");
     } finally {
       this.isChatSending.set(false);
-      this.safeDetectChanges();
+      this.triggerUpdate();
       this.scrollToBottom();
     }
   }
 
   private addBotMessage(text: string) {
     this.chatMessages.update(msgs => [...msgs, { role: 'model', text }]);
-    this.safeDetectChanges();
+    this.triggerUpdate();
     this.scrollToBottom();
   }
 
@@ -156,11 +156,39 @@ export class AppComponent {
     }, 100);
   }
 
-  // Helper to prevent "Should be run in update mode" assertion error
-  // by breaking the synchronous call stack.
-  private safeDetectChanges() {
+  // --- Helpers ---
+
+  onScriptInput(event: Event) {
+    const val = (event.target as HTMLTextAreaElement).value;
+    this.scriptText.set(val);
+    // Trigger update so the button disabled state re-evaluates
+    this.triggerUpdate();
+  }
+  
+  onResolutionChange(event: Event) {
+    const val = (event.target as HTMLSelectElement).value;
+    this.selectedResolution.set(val);
+    this.triggerUpdate();
+  }
+
+  onAspectRatioChange(event: Event) {
+    const val = (event.target as HTMLSelectElement).value;
+    this.selectedAspectRatio.set(val);
+    this.triggerUpdate();
+  }
+  
+  onChatInput(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    this.chatInput.set(val);
+    this.triggerUpdate();
+  }
+
+  // Safely trigger change detection for the whole app
+  private triggerUpdate() {
+    // We use setTimeout to decouple from the current execution stack (e.g. event handlers)
+    // and ensure we don't violate signal graph update phases.
     setTimeout(() => {
-      this.cdr.detectChanges();
+      this.appRef.tick();
     }, 0);
   }
 }

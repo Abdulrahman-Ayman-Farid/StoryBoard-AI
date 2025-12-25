@@ -33,7 +33,7 @@
             <label class="block text-xs text-gray-400 mb-1">Aspect Ratio</label>
             <select 
               [value]="selectedAspectRatio()" 
-              (change)="selectedAspectRatio.set($any($event.target).value)"
+              (change)="onAspectRatioChange($event)"
               class="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
               <option value="16:9">16:9 (Cinematic)</option>
               <option value="4:3">4:3 (TV)</option>
@@ -45,7 +45,7 @@
             <label class="block text-xs text-gray-400 mb-1">Resolution (Quality)</label>
             <select 
               [value]="selectedResolution()" 
-              (change)="selectedResolution.set($any($event.target).value)"
+              (change)="onResolutionChange($event)"
               class="w-full bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
               <option value="1K">1K (Fast)</option>
               <option value="2K">2K (Balanced)</option>
@@ -60,7 +60,7 @@
         <label class="block text-sm font-medium text-gray-300 mb-2">Movie Script / Scene Description</label>
         <textarea 
           [value]="scriptText()" 
-          (input)="scriptText.set($any($event.target).value)"
+          (input)="onScriptInput($event)"
           placeholder="INT. COFFEE SHOP - DAY&#10;&#10;A nervous JOHN (30s) sits alone at a table, tapping his foot. He checks his watch. The door chimes."
           class="flex-grow w-full bg-gray-800 border border-gray-700 text-gray-100 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-4 font-mono leading-relaxed resize-none"></textarea>
       </div>
@@ -211,7 +211,7 @@
             <input 
               type="text" 
               [value]="chatInput()"
-              (input)="chatInput.set($any($event.target).value)"
+              (input)="onChatInput($event)"
               (keydown.enter)="sendChatMessage()"
               placeholder="Ask me anything..." 
               class="w-full bg-gray-900 border border-gray-600 text-white text-sm rounded-full pl-4 pr-10 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
