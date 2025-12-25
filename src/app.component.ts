@@ -378,6 +378,20 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
+  updateScenePrompt(scene: Scene, event: Event) {
+    const newPrompt = (event.target as HTMLTextAreaElement).value;
+    if (scene.visualPrompt === newPrompt) return;
+
+    // Save history
+    const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
+    
+    this.updateSceneState(scene.sceneNumber, {
+       visualPrompt: newPrompt,
+       imageUrl: undefined, // Clear image as prompt changed/invalidated
+       promptHistory: [...(scene.promptHistory || []), historyItem]
+    });
+  }
+
   async enhancePromptForScene(scene: Scene) {
     if (scene.isEnhancingPrompt || scene.isGenerating) return;
 
@@ -495,7 +509,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     
     this.updateSceneState(scene.sceneNumber, {
       visualPrompt: previous.prompt,
-      imageUrl: previous.imageUrl,
+      imageUrl: previous.imageUrl, // Restore image if it exists in history
       promptHistory: newHistory,
       statusMessage: undefined,
       errorMessage: undefined,

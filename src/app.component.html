@@ -331,7 +331,7 @@
                 <div class="relative mb-8">
                     <div class="absolute inset-0 bg-indigo-500/30 blur-[60px] rounded-full animate-pulse"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="relative h-28 w-28 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 <p class="text-white/50 text-lg font-light tracking-widest uppercase">Awaiting Script</p>
@@ -516,7 +516,7 @@
                                             </svg>
                                         } @else {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 group-hover/enhance:text-white transition-colors">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 00-1.423 1.423z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 00-1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                                             </svg>
                                         }
                                         <span class="tracking-wide">AI Enhance</span>
@@ -524,8 +524,8 @@
                             </div>
 
                             @if (scene.promptHistory && scene.promptHistory.length > 0) {
-                                <button (click)="revertToPreviousVersion(scene)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <button (click)="revertToPreviousVersion(scene)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 group/revert">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 group-hover/revert:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                     </svg>
                                 Revert
@@ -537,10 +537,12 @@
                                 <div class="h-4 w-3/4 bg-white/10 rounded animate-pulse mb-2"></div>
                                 <div class="h-4 w-1/2 bg-white/10 rounded animate-pulse"></div>
                             } @else {
-                                <p class="text-white/40 text-xs italic line-clamp-2 hover:line-clamp-none transition-all duration-300 select-text font-serif tracking-wide">
-                                <span class="text-indigo-400/60 not-italic mr-2 font-sans text-[9px] uppercase tracking-widest">Prompt</span>
-                                {{ scene.visualPrompt }}
-                                </p>
+                                <textarea
+                                    [value]="scene.visualPrompt"
+                                    (change)="updateScenePrompt(scene, $event)"
+                                    class="w-full bg-transparent text-white/60 text-xs italic font-serif tracking-wide border-none outline-none resize-none placeholder-white/20 hover:text-white/80 transition-colors focus:bg-white/5 rounded p-2 -ml-2"
+                                    rows="3"
+                                ></textarea>
                             }
                         </div>
                         </div>
