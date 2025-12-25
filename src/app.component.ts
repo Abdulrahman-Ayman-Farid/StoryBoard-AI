@@ -9,6 +9,7 @@ interface Scene {
   imageUrl?: string;
   isGenerating?: boolean;
   isRegeneratingText?: boolean;
+  isEnhancingPrompt?: boolean;
   statusMessage?: string;
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
 }
@@ -132,6 +133,7 @@ export class AppComponent {
         ...s, 
         isGenerating: false, 
         isRegeneratingText: false, 
+        isEnhancingPrompt: false,
         statusMessage: '',
         promptHistory: [] 
       })));
@@ -170,6 +172,33 @@ export class AppComponent {
       console.error(error);
       this.updateSceneState(scene.sceneNumber, { isRegeneratingText: false });
       alert(`Failed to regenerate text for Scene ${scene.sceneNumber}`);
+    }
+  }
+
+  async enhancePromptForScene(scene: Scene) {
+    if (scene.isEnhancingPrompt || scene.isGenerating) return;
+
+    this.updateSceneState(scene.sceneNumber, { isEnhancingPrompt: true });
+
+    try {
+      const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
+      
+      if (enhancedPrompt !== scene.visualPrompt) {
+         const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
+         this.updateSceneState(scene.sceneNumber, {
+           visualPrompt: enhancedPrompt,
+           isEnhancingPrompt: false,
+           promptHistory: [...(scene.promptHistory || []), historyItem]
+         });
+         this.showNotification('Prompt enhanced');
+      } else {
+         this.updateSceneState(scene.sceneNumber, { isEnhancingPrompt: false });
+         this.showNotification('Prompt is already optimized');
+      }
+    } catch (error) {
+      console.error(error);
+      this.updateSceneState(scene.sceneNumber, { isEnhancingPrompt: false });
+      this.showNotification('Failed to enhance prompt');
     }
   }
 
