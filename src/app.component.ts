@@ -62,6 +62,10 @@ export class AppComponent {
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
       this.scenes.set(result.map((s: any) => ({ ...s, isGenerating: false, isRegeneratingText: false })));
+      
+      // Automatically generate images for all new scenes
+      this.generateAllImages();
+      
     } catch (error) {
       alert('Failed to analyze script. Please try again.');
       console.error(error);
