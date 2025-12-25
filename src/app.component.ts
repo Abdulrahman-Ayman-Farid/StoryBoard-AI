@@ -53,6 +53,10 @@ export class AppComponent {
   // Notification State
   notification = signal<string | null>(null);
   
+  // Drag and Drop State
+  draggedIndex = signal<number | null>(null);
+  dragOverIndex = signal<number | null>(null);
+  
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   constructor() {
@@ -116,6 +120,66 @@ export class AppComponent {
       this.notification.set(null);
       this.triggerUpdate();
     }, 3000);
+  }
+
+  // --- Drag and Drop Logic ---
+
+  onDragStart(event: DragEvent, index: number) {
+    this.draggedIndex.set(index);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index.toString());
+      // Make the drag ghost image a bit transparent if possible, or just rely on browser default
+    }
+  }
+
+  onDragOver(event: DragEvent, index: number) {
+    event.preventDefault(); // Allow drop
+    if (this.draggedIndex() === null || this.draggedIndex() === index) return;
+    
+    // Only update signal if changed to prevent unnecessary checking
+    if (this.dragOverIndex() !== index) {
+      this.dragOverIndex.set(index);
+      this.triggerUpdate();
+    }
+    
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onDrop(event: DragEvent, index: number) {
+    event.preventDefault();
+    const fromIndex = this.draggedIndex();
+    
+    if (fromIndex !== null && fromIndex !== index) {
+      this.reorderScenes(fromIndex, index);
+      this.showNotification('Scene reordered');
+    }
+    
+    this.resetDragState();
+  }
+  
+  onDragEnd(event: DragEvent) {
+    this.resetDragState();
+  }
+  
+  onDragLeave(event: DragEvent) {
+      // Optional: Logic to clear dragOver if leaving the list entirely
+      // For individual items, we rely on dragOver of the new item taking precedence
+  }
+
+  private resetDragState() {
+    this.draggedIndex.set(null);
+    this.dragOverIndex.set(null);
+    this.triggerUpdate();
+  }
+
+  private reorderScenes(fromIndex: number, toIndex: number) {
+    const currentScenes = [...this.scenes()];
+    const item = currentScenes.splice(fromIndex, 1)[0];
+    currentScenes.splice(toIndex, 0, item);
+    this.scenes.set(currentScenes);
   }
 
   // --- Storyboard Logic ---
