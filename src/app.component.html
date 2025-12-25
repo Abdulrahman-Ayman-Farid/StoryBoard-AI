@@ -9,7 +9,7 @@
           <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
           <div class="relative bg-black/50 border border-white/10 p-2 rounded-xl backdrop-blur-md">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
         </div>
@@ -125,7 +125,7 @@
           <div class="relative mb-6">
             <div class="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 rounded-full animate-pulse"></div>
             <svg xmlns="http://www.w3.org/2000/svg" class="relative h-24 w-24 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
           <p class="text-white/30 text-lg font-light tracking-wide">Ready to visualize your narrative.</p>
@@ -191,7 +191,9 @@
                             <div class="absolute inset-0 rounded-full border-t-2 border-indigo-400 animate-spin"></div>
                             <div class="absolute inset-2 rounded-full border-b-2 border-purple-400 animate-spin reverse"></div>
                         </div>
-                        <span class="text-white/60 text-xs tracking-widest uppercase font-medium animate-pulse">Rendering</span>
+                        <span class="text-white/60 text-xs tracking-widest uppercase font-medium animate-pulse">
+                          {{ scene.statusMessage || 'Rendering' }}
+                        </span>
                       </div>
                     } @else {
                       <button (click)="generateImageForScene(scene)" class="px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_20px_rgba(79,70,229,0.2)]">

@@ -93,11 +93,36 @@ export class GeminiService {
     }
   }
 
+  async enhancePrompt(originalPrompt: string): Promise<string> {
+    const model = 'gemini-2.5-flash';
+    const prompt = `
+      You are a professional visual prompt engineer for high-end AI image generators (like Imagen 3, Midjourney).
+      Enhance the following scene description into a sophisticated, highly detailed image generation prompt.
+      
+      Input Description: "${originalPrompt}"
+      
+      Instructions:
+      1. Improve the description of lighting (e.g., volumetric, cinematic, chiaroscuro, golden hour).
+      2. Specify camera details (e.g., 35mm, wide angle, depth of field, bokeh).
+      3. Add artistic style keywords (e.g., hyperrealistic, 8k, masterpiece, unreal engine 5 render, highly detailed).
+      4. Ensure the subject and action remain clear and central.
+      5. Output ONLY the enhanced prompt string. Do not add quotes or markdown.
+    `;
+
+    try {
+      const response = await this.ai.models.generateContent({
+        model: model,
+        contents: prompt,
+      });
+      return response.text.trim();
+    } catch (error) {
+      console.warn('Prompt enhancement failed, using original.', error);
+      return originalPrompt;
+    }
+  }
+
   async generateImage(prompt: string, aspectRatio: string = '16:9'): Promise<string> {
     const model = 'imagen-4.0-generate-001';
-    
-    // Validate aspect ratio for the API (only specific ones allowed)
-    // The UI might use 16:9, but API accepts '16:9'
     
     try {
       const response = await this.ai.models.generateImages({

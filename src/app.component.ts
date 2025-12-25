@@ -9,6 +9,7 @@ interface Scene {
   imageUrl?: string;
   isGenerating?: boolean;
   isRegeneratingText?: boolean;
+  statusMessage?: string;
 }
 
 interface ChatMessage {
@@ -66,7 +67,7 @@ export class AppComponent {
 
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
-      this.scenes.set(result.map((s: any) => ({ ...s, isGenerating: false, isRegeneratingText: false })));
+      this.scenes.set(result.map((s: any) => ({ ...s, isGenerating: false, isRegeneratingText: false, statusMessage: '' })));
       
       // Automatically generate images for all new scenes
       this.generateAllImages();
@@ -104,24 +105,44 @@ export class AppComponent {
     if (scene.isGenerating) return;
 
     // Update specific scene state
-    this.updateSceneState(scene.sceneNumber, { isGenerating: true });
+    this.updateSceneState(scene.sceneNumber, { isGenerating: true, statusMessage: 'Enhancing prompt...' });
 
     try {
-      // Append resolution to prompt as a quality hint since API doesn't support direct resolution param
-      const enhancedPrompt = `${scene.visualPrompt}, highly detailed, ${this.selectedResolution()} resolution, cinematic lighting, masterpiece`;
+      // 1. Enhance the prompt first
+      const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
       
-      const imageUrl = await this.geminiService.generateImage(enhancedPrompt, this.selectedAspectRatio());
+      // Update the scene with the enhanced prompt so the user sees what was used
+      this.updateSceneState(scene.sceneNumber, { 
+        visualPrompt: enhancedPrompt,
+        statusMessage: 'Rendering image...'
+      });
+
+      // 2. Generate the image
+      // We append resolution here as a final bias
+      const finalPrompt = `${enhancedPrompt}, ${this.selectedResolution()} resolution`;
+      const imageUrl = await this.geminiService.generateImage(finalPrompt, this.selectedAspectRatio());
       
-      this.updateSceneState(scene.sceneNumber, { imageUrl, isGenerating: false });
+      this.updateSceneState(scene.sceneNumber, { 
+        imageUrl, 
+        isGenerating: false,
+        statusMessage: undefined
+      });
+
     } catch (error) {
       console.error(error);
-      this.updateSceneState(scene.sceneNumber, { isGenerating: false });
-      alert(`Failed to generate image for Scene ${scene.sceneNumber}`);
+      this.updateSceneState(scene.sceneNumber, { 
+        isGenerating: false,
+        statusMessage: 'Failed'
+      });
+      // alert(`Failed to generate image for Scene ${scene.sceneNumber}`); // Reduce alert noise
     }
   }
 
   async generateAllImages() {
     const currentScenes = this.scenes();
+    
+    // We can run these in parallel chunks to speed it up, or strictly sequential.
+    // Sequential is safer for rate limits and simpler to reason about status updates.
     for (const scene of currentScenes) {
       if (!scene.imageUrl) {
         await this.generateImageForScene(scene);
