@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
 import { GeminiService } from './services/gemini.service';
 import { Chat, GenerateContentResponse } from '@google/genai';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 
 interface Scene {
   sceneNumber: number;
@@ -40,7 +40,7 @@ interface ProjectSnapshot {
 
 @Component({
   selector: 'app-root',
-  imports: [DatePipe], // Import DatePipe for the template
+  imports: [DatePipe, DecimalPipe], // Import DecimalPipe for number formatting
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -55,6 +55,12 @@ export class AppComponent {
   scriptText = signal<string>('');
   scenes = signal<Scene[]>([]);
   isAnalyzing = signal<boolean>(false);
+  
+  // Computed Properties
+  wordCount = computed(() => {
+    const text = this.scriptText().trim();
+    return text ? text.split(/\s+/).length : 0;
+  });
   
   // Image Config
   selectedAspectRatio = signal<string>('16:9');
@@ -96,6 +102,33 @@ export class AppComponent {
   enterApp() {
     this.hasEntered.set(true);
     this.triggerUpdate();
+  }
+
+  // --- Script Management ---
+
+  loadSampleScript() {
+    const sample = `EXT. CYBERPUNK MARKET - NIGHT
+
+Neon rain slicks the streets of Neo-Tokyo. Holographic advertisements for synthetic organs flicker above the crowds.
+
+KAI (20s, cybernetic arm, street-smart) leans against a noodle stall, watching the entrance to the Arasaka Tower. He checks his wrist-comp.
+
+KAI
+(into comms)
+I'm in position. The target is moving.
+
+A black flying vehicle descends silently from the smog, landing on the roof.`;
+    
+    this.scriptText.set(sample);
+    this.triggerUpdate();
+    this.showNotification('Sample script loaded');
+  }
+
+  clearScript() {
+    if (this.scriptText() && confirm('Are you sure you want to clear the current script?')) {
+      this.scriptText.set('');
+      this.triggerUpdate();
+    }
   }
 
   // --- Persistence Logic ---

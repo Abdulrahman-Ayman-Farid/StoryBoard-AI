@@ -259,14 +259,43 @@
             </div>
 
             <!-- Script Input -->
-            <div class="flex-grow flex flex-col">
-                <label class="block text-xs font-semibold text-white/30 mb-3 uppercase tracking-[0.2em] pl-1">Script Input</label>
-                <div class="relative flex-grow group h-64 lg:h-auto">
-                <textarea 
-                    [value]="scriptText()" 
-                    (input)="onScriptInput($event)"
-                    placeholder="INT. SPACESHIP - NIGHT&#10;&#10;The corridor is bathed in emergency red light. RIPLEY (30s) breathes heavily, clutching a motion tracker."
-                    class="w-full h-full bg-black/20 hover:bg-black/30 border border-white/10 text-gray-200 text-sm rounded-[1.5rem] focus:ring-2 focus:ring-indigo-500/30 focus:border-white/20 p-6 font-light leading-relaxed resize-none transition-all outline-none placeholder-white/10 backdrop-blur-sm"></textarea>
+            <div class="flex-grow flex flex-col min-h-0 relative group/input">
+                <div class="flex justify-between items-end mb-3 pl-1 pr-1">
+                    <label class="text-xs font-semibold text-white/30 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Script Source
+                    </label>
+                    
+                    <div class="flex items-center gap-2">
+                         <button (click)="loadSampleScript()" class="text-[10px] uppercase font-bold tracking-wider px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-indigo-300 hover:text-white border border-white/5 transition-all">
+                            Load Sample
+                         </button>
+                         <button (click)="clearScript()" [disabled]="!scriptText()" class="text-[10px] uppercase font-bold tracking-wider px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/10 text-white/40 hover:text-red-400 border border-white/5 transition-all disabled:opacity-0">
+                            Clear
+                         </button>
+                    </div>
+                </div>
+
+                <div class="relative flex-grow group h-64 lg:h-auto overflow-hidden rounded-[1.5rem] transition-all duration-500 ring-1 ring-white/10 hover:ring-white/20 focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:shadow-[0_0_50px_rgba(79,70,229,0.15)] bg-black/40 backdrop-blur-xl">
+                    
+                    <!-- Decorative corner glow on focus -->
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 blur-2xl rounded-full pointer-events-none transition-opacity duration-700 opacity-0 group-focus-within/input:opacity-100"></div>
+                    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500/10 blur-2xl rounded-full pointer-events-none transition-opacity duration-700 opacity-0 group-focus-within/input:opacity-100"></div>
+
+                    <textarea 
+                        [value]="scriptText()" 
+                        (input)="onScriptInput($event)"
+                        placeholder="EXT. WASTELAND - DAY&#10;&#10;Wind howls across the scorched earth..."
+                        class="w-full h-full bg-transparent text-gray-200 text-sm p-6 font-mono leading-relaxed resize-none transition-all outline-none placeholder-white/10 custom-scrollbar selection:bg-indigo-500/30 relative z-10"></textarea>
+                    
+                    <!-- Footer Info -->
+                    <div class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-20 flex justify-end items-end p-4">
+                         <span class="text-[10px] font-mono text-white/30 tracking-widest bg-black/40 px-2 py-1 rounded backdrop-blur-sm border border-white/5">
+                            {{ wordCount() | number }} WORDS
+                         </span>
+                    </div>
                 </div>
             </div>
 
@@ -274,7 +303,7 @@
             <button 
                 (click)="analyzeScript()" 
                 [disabled]="isAnalyzing() || !scriptText()"
-                class="group relative w-full overflow-hidden rounded-2xl p-[1px] focus:outline-none transition-transform active:scale-[0.99] shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20">
+                class="group relative w-full overflow-hidden rounded-2xl p-[1px] focus:outline-none transition-transform active:scale-[0.99] shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 mt-6">
                 <span class="absolute inset-[-1000%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#4f46e5_0%,#9333ea_50%,#4f46e5_100%)] opacity-70 group-hover:opacity-100 transition-opacity"></span>
                 <span class="relative flex h-full w-full items-center justify-center gap-3 rounded-2xl bg-gray-900/90 px-8 py-5 text-sm font-semibold text-white backdrop-blur-3xl transition-colors group-hover:bg-gray-900/80 disabled:opacity-50 disabled:cursor-not-allowed">
                 @if (isAnalyzing()) {
@@ -302,7 +331,7 @@
                 <div class="relative mb-8">
                     <div class="absolute inset-0 bg-indigo-500/30 blur-[60px] rounded-full animate-pulse"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="relative h-28 w-28 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 <p class="text-white/50 text-lg font-light tracking-widest uppercase">Awaiting Script</p>
@@ -487,7 +516,7 @@
                                             </svg>
                                         } @else {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 group-hover/enhance:text-white transition-colors">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 00-1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 00-1.423 1.423z" />
                                             </svg>
                                         }
                                         <span class="tracking-wide">AI Enhance</span>
