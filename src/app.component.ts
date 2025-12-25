@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
 import { GeminiService } from './services/gemini.service';
 import { Chat, GenerateContentResponse } from '@google/genai';
 
@@ -34,6 +34,11 @@ export class AppComponent {
   // Image Config
   selectedAspectRatio = signal<string>('16:9');
   selectedResolution = signal<string>('2K'); // 1K, 2K, 4K
+
+  // Computed Style for Aspect Ratio
+  aspectRatioStyle = computed(() => {
+    return this.selectedAspectRatio().replace(':', '/');
+  });
   
   // Chat State
   isChatOpen = signal<boolean>(false);
