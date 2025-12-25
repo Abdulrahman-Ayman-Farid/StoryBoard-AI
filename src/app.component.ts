@@ -47,6 +47,9 @@ export class AppComponent {
   private geminiService = inject(GeminiService);
   private appRef = inject(ApplicationRef);
 
+  // App State
+  hasEntered = signal<boolean>(false);
+
   // Script State
   scriptText = signal<string>('');
   scenes = signal<Scene[]>([]);
@@ -85,6 +88,13 @@ export class AppComponent {
     // Initialize Chat
     this.chatSession = this.geminiService.getChatModel();
     this.addBotMessage("Hello! I'm your Storyboard Assistant. How can I help you with your script today?");
+  }
+
+  // --- App Flow ---
+
+  enterApp() {
+    this.hasEntered.set(true);
+    this.triggerUpdate();
   }
 
   // --- Persistence Logic ---
