@@ -97,7 +97,7 @@
                 <div class="absolute -inset-2 bg-indigo-500/40 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition duration-1000"></div>
                 <div class="relative bg-white/[0.05] border border-white/10 p-2.5 rounded-xl backdrop-blur-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 </div>
@@ -302,7 +302,7 @@
                 <div class="relative mb-8">
                     <div class="absolute inset-0 bg-indigo-500/30 blur-[60px] rounded-full animate-pulse"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="relative h-28 w-28 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 <p class="text-white/50 text-lg font-light tracking-widest uppercase">Awaiting Script</p>
@@ -353,9 +353,13 @@
                                 <div class="absolute inset-0 rounded-full border-t-2 border-indigo-400 animate-spin"></div>
                                 <div class="absolute inset-2 rounded-full border-b-2 border-purple-400 animate-spin reverse"></div>
                             </div>
-                            <span class="text-white/90 text-xs tracking-widest uppercase font-bold animate-pulse shadow-black drop-shadow-md">
+                            <span class="text-white/90 text-xs tracking-widest uppercase font-bold animate-pulse shadow-black drop-shadow-md mb-2">
                                 {{ scene.statusMessage || 'Processing...' }}
                             </span>
+                             <!-- Progress Bar -->
+                            <div class="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" [style.width.%]="scene.progress || 0"></div>
+                            </div>
                             </div>
                         }
 
@@ -389,6 +393,10 @@
                                     <span class="text-white/80 text-[10px] tracking-[0.2em] uppercase font-bold animate-pulse">
                                     {{ scene.statusMessage || 'Initializing...' }}
                                     </span>
+                                    <!-- Progress Bar -->
+                                    <div class="w-40 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" [style.width.%]="scene.progress || 0"></div>
+                                    </div>
                                 </div>
                             </div>
                             } @else {

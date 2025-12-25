@@ -14,6 +14,7 @@ interface Scene {
   statusMessage?: string;
   errorMessage?: string; 
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
+  progress?: number;
 }
 
 interface ChatMessage {
@@ -297,7 +298,8 @@ export class AppComponent {
         isEnhancingPrompt: false,
         statusMessage: '',
         errorMessage: undefined,
-        promptHistory: [] 
+        promptHistory: [],
+        progress: 0 
       })));
       
       // Automatically generate images for all new scenes
@@ -378,10 +380,11 @@ export class AppComponent {
   async generateImageForScene(scene: Scene) {
     if (scene.isGenerating) return;
 
-    // Update specific scene state
+    // Update specific scene state - Start
     this.updateSceneState(scene.sceneNumber, { 
       isGenerating: true, 
       statusMessage: 'Enhancing prompt...',
+      progress: 10,
       errorMessage: undefined 
     });
 
@@ -389,6 +392,11 @@ export class AppComponent {
       // 1. Enhance the prompt first
       const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
       
+      this.updateSceneState(scene.sceneNumber, {
+        progress: 40,
+        statusMessage: 'Preparing render...'
+      });
+
       // Capture history if prompt changed (it almost always does)
       let historyUpdate = {};
       if (enhancedPrompt !== scene.visualPrompt) {
@@ -400,6 +408,7 @@ export class AppComponent {
       this.updateSceneState(scene.sceneNumber, { 
         visualPrompt: enhancedPrompt,
         statusMessage: 'Rendering image...',
+        progress: 60,
         ...historyUpdate
       });
 
@@ -411,7 +420,8 @@ export class AppComponent {
       this.updateSceneState(scene.sceneNumber, { 
         imageUrl, 
         isGenerating: false,
-        statusMessage: undefined
+        statusMessage: undefined,
+        progress: 100
       });
 
     } catch (error: any) {
@@ -429,7 +439,8 @@ export class AppComponent {
       this.updateSceneState(scene.sceneNumber, { 
         isGenerating: false,
         statusMessage: 'Failed',
-        errorMessage: friendlyError
+        errorMessage: friendlyError,
+        progress: 0
       });
     }
   }
@@ -454,7 +465,8 @@ export class AppComponent {
       imageUrl: previous.imageUrl,
       promptHistory: newHistory,
       statusMessage: undefined,
-      errorMessage: undefined
+      errorMessage: undefined,
+      progress: 0
     });
   }
 
