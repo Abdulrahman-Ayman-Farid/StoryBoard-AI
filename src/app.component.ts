@@ -17,6 +17,13 @@ interface Scene {
   progress?: number;
 }
 
+interface SceneGroup {
+  id: string;
+  name: string;
+  isCollapsed: boolean;
+  scenes: Scene[];
+}
+
 interface ChatMessage {
   role: 'user' | 'model';
   text: string;
@@ -25,7 +32,7 @@ interface ChatMessage {
 // Data shape for a single version
 interface ProjectData {
   script: string;
-  scenes: Scene[];
+  sceneGroups: SceneGroup[]; // Updated from scenes: Scene[]
   aspectRatio: string;
   resolution: string;
   timestamp: number;
@@ -40,7 +47,7 @@ interface ProjectSnapshot {
 
 @Component({
   selector: 'app-root',
-  imports: [DatePipe, DecimalPipe], // Import DecimalPipe for number formatting
+  imports: [DatePipe, DecimalPipe],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -53,13 +60,20 @@ export class AppComponent {
 
   // Script State
   scriptText = signal<string>('');
-  scenes = signal<Scene[]>([]);
+  
+  // Replaced flat scenes with groups
+  sceneGroups = signal<SceneGroup[]>([]);
+  
   isAnalyzing = signal<boolean>(false);
   
   // Computed Properties
   wordCount = computed(() => {
     const text = this.scriptText().trim();
     return text ? text.split(/\s+/).length : 0;
+  });
+
+  totalSceneCount = computed(() => {
+    return this.sceneGroups().reduce((acc, group) => acc + group.scenes.length, 0);
   });
   
   // Image Config
@@ -82,8 +96,10 @@ export class AppComponent {
   notification = signal<string | null>(null);
   
   // Drag and Drop State
-  draggedIndex = signal<number | null>(null);
-  dragOverIndex = signal<number | null>(null);
+  draggedGroupIndex = signal<number | null>(null);
+  draggedSceneIndex = signal<number | null>(null);
+  dragOverGroupIndex = signal<number | null>(null);
+  dragOverSceneIndex = signal<number | null>(null);
 
   // Versioning/History State
   projectHistory = signal<ProjectSnapshot[]>([]);
@@ -134,14 +150,13 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   // --- Persistence Logic ---
 
   saveProject() {
-    // When saving manually, we also persist the history
     const data = {
       script: this.scriptText(),
-      scenes: this.scenes(),
+      sceneGroups: this.sceneGroups(),
       aspectRatio: this.selectedAspectRatio(),
       resolution: this.selectedResolution(),
       chatHistory: this.chatMessages(),
-      projectHistory: this.projectHistory() // Save the versions too
+      projectHistory: this.projectHistory()
     };
 
     try {
@@ -163,9 +178,21 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       if (raw) {
         const data = JSON.parse(raw);
         
-        // Restore current state
         if (data.script) this.scriptText.set(data.script);
-        if (data.scenes) this.scenes.set(data.scenes);
+        
+        // Migration logic for old saves (flat scenes -> groups)
+        if (data.scenes && Array.isArray(data.scenes) && !data.sceneGroups) {
+          const newGroup: SceneGroup = {
+            id: crypto.randomUUID(),
+            name: 'Sequence 01',
+            isCollapsed: false,
+            scenes: data.scenes
+          };
+          this.sceneGroups.set([newGroup]);
+        } else if (data.sceneGroups) {
+          this.sceneGroups.set(data.sceneGroups);
+        }
+
         if (data.aspectRatio) this.selectedAspectRatio.set(data.aspectRatio);
         if (data.resolution) this.selectedResolution.set(data.resolution);
         if (data.chatHistory) this.chatMessages.set(data.chatHistory);
@@ -193,6 +220,41 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }, 3000);
   }
 
+  // --- Group Management ---
+
+  addNewGroup() {
+    const newGroup: SceneGroup = {
+      id: crypto.randomUUID(),
+      name: `Act ${this.sceneGroups().length + 1}`,
+      isCollapsed: false,
+      scenes: []
+    };
+    this.sceneGroups.update(groups => [...groups, newGroup]);
+    this.triggerUpdate();
+    // Scroll to bottom logic could go here
+  }
+
+  deleteGroup(groupIndex: number) {
+    if (confirm('Delete this section? All scenes inside will be removed.')) {
+      this.sceneGroups.update(groups => groups.filter((_, i) => i !== groupIndex));
+      this.triggerUpdate();
+    }
+  }
+
+  toggleGroupCollapse(groupIndex: number) {
+    this.sceneGroups.update(groups => 
+      groups.map((g, i) => i === groupIndex ? { ...g, isCollapsed: !g.isCollapsed } : g)
+    );
+    this.triggerUpdate();
+  }
+
+  updateGroupName(groupIndex: number, event: Event) {
+    const newName = (event.target as HTMLInputElement).value;
+    this.sceneGroups.update(groups => 
+      groups.map((g, i) => i === groupIndex ? { ...g, name: newName } : g)
+    );
+  }
+
   // --- Versioning / Snapshots ---
 
   toggleHistory() {
@@ -202,12 +264,12 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
 
   createSnapshot(customName?: string) {
     const timestamp = Date.now();
-    const sceneCount = this.scenes().length;
+    const sceneCount = this.totalSceneCount();
     const name = customName || `Snapshot: ${sceneCount} Scenes`;
 
     const snapshotData: ProjectData = {
       script: this.scriptText(),
-      scenes: JSON.parse(JSON.stringify(this.scenes())), // Deep copy
+      sceneGroups: JSON.parse(JSON.stringify(this.sceneGroups())), // Deep copy
       aspectRatio: this.selectedAspectRatio(),
       resolution: this.selectedResolution(),
       timestamp
@@ -220,11 +282,8 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       data: snapshotData
     };
 
-    // Add to history (newest first)
     this.projectHistory.update(history => [newSnapshot, ...history]);
     this.showNotification('Version snapshot created');
-    
-    // Auto-save to local storage so history persists
     this.saveProject();
   }
 
@@ -233,7 +292,20 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
 
     const data = snapshot.data;
     this.scriptText.set(data.script);
-    this.scenes.set(JSON.parse(JSON.stringify(data.scenes))); // Deep copy back
+    
+    // Handle migration for old snapshots as well
+    if ((data as any).scenes && !(data as any).sceneGroups) {
+         const newGroup: SceneGroup = {
+            id: crypto.randomUUID(),
+            name: 'Restored Sequence',
+            isCollapsed: false,
+            scenes: (data as any).scenes
+          };
+          this.sceneGroups.set([newGroup]);
+    } else {
+        this.sceneGroups.set(JSON.parse(JSON.stringify(data.sceneGroups))); 
+    }
+
     this.selectedAspectRatio.set(data.aspectRatio);
     this.selectedResolution.set(data.resolution);
     
@@ -243,30 +315,30 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   }
 
   deleteSnapshot(id: string, event: Event) {
-    event.stopPropagation(); // Prevent triggering restore
+    event.stopPropagation();
     if (!confirm('Delete this snapshot?')) return;
-    
     this.projectHistory.update(h => h.filter(s => s.id !== id));
-    this.saveProject(); // Update storage
+    this.saveProject();
   }
 
-  // --- Drag and Drop Logic ---
+  // --- Drag and Drop Logic (Cross-Group) ---
 
-  onDragStart(event: DragEvent, index: number) {
-    this.draggedIndex.set(index);
+  onDragStart(event: DragEvent, groupIndex: number, sceneIndex: number) {
+    this.draggedGroupIndex.set(groupIndex);
+    this.draggedSceneIndex.set(sceneIndex);
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', index.toString());
+      event.dataTransfer.setData('text/plain', JSON.stringify({ groupIndex, sceneIndex }));
     }
   }
 
-  onDragOver(event: DragEvent, index: number) {
-    event.preventDefault(); // Allow drop
-    if (this.draggedIndex() === null || this.draggedIndex() === index) return;
+  onDragOver(event: DragEvent, groupIndex: number, sceneIndex: number) {
+    event.preventDefault(); 
     
     // Only update signal if changed to prevent unnecessary checking
-    if (this.dragOverIndex() !== index) {
-      this.dragOverIndex.set(index);
+    if (this.dragOverGroupIndex() !== groupIndex || this.dragOverSceneIndex() !== sceneIndex) {
+      this.dragOverGroupIndex.set(groupIndex);
+      this.dragOverSceneIndex.set(sceneIndex);
       this.triggerUpdate();
     }
     
@@ -275,13 +347,14 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
-  onDrop(event: DragEvent, index: number) {
+  onDrop(event: DragEvent, targetGroupIndex: number, targetSceneIndex: number) {
     event.preventDefault();
-    const fromIndex = this.draggedIndex();
+    const sourceGroupIndex = this.draggedGroupIndex();
+    const sourceSceneIndex = this.draggedSceneIndex();
     
-    if (fromIndex !== null && fromIndex !== index) {
-      this.reorderScenes(fromIndex, index);
-      this.showNotification('Scene reordered');
+    if (sourceGroupIndex !== null && sourceSceneIndex !== null) {
+      this.moveScene(sourceGroupIndex, sourceSceneIndex, targetGroupIndex, targetSceneIndex);
+      this.showNotification('Scene moved');
     }
     
     this.resetDragState();
@@ -292,20 +365,30 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   }
   
   onDragLeave(event: DragEvent) {
-    // Optional
+    // Optional logic
   }
 
   private resetDragState() {
-    this.draggedIndex.set(null);
-    this.dragOverIndex.set(null);
+    this.draggedGroupIndex.set(null);
+    this.draggedSceneIndex.set(null);
+    this.dragOverGroupIndex.set(null);
+    this.dragOverSceneIndex.set(null);
     this.triggerUpdate();
   }
 
-  private reorderScenes(fromIndex: number, toIndex: number) {
-    const currentScenes = [...this.scenes()];
-    const item = currentScenes.splice(fromIndex, 1)[0];
-    currentScenes.splice(toIndex, 0, item);
-    this.scenes.set(currentScenes);
+  private moveScene(fromGroupIdx: number, fromSceneIdx: number, toGroupIdx: number, toSceneIdx: number) {
+    const groups = JSON.parse(JSON.stringify(this.sceneGroups())); // Deep clone
+    
+    // Remove from source
+    const [movedScene] = groups[fromGroupIdx].scenes.splice(fromSceneIdx, 1);
+    
+    // Insert into target
+    // Adjust index if moving within same group downwards
+    let finalTargetIndex = toSceneIdx;
+    
+    groups[toGroupIdx].scenes.splice(finalTargetIndex, 0, movedScene);
+    
+    this.sceneGroups.set(groups);
   }
 
   // --- Storyboard Logic ---
@@ -313,18 +396,17 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   async analyzeScript() {
     if (!this.scriptText()) return;
 
-    // Auto-snapshot before major changes
-    if (this.scenes().length > 0) {
+    if (this.totalSceneCount() > 0) {
       this.createSnapshot('Auto-save: Before Analysis');
     }
 
     this.isAnalyzing.set(true);
-    this.scenes.set([]); 
+    this.sceneGroups.set([]); 
     this.triggerUpdate();
 
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
-      this.scenes.set(result.map((s: any) => ({ 
+      const initialScenes = result.map((s: any) => ({ 
         ...s, 
         isGenerating: false, 
         isRegeneratingText: false, 
@@ -333,13 +415,22 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         errorMessage: undefined,
         promptHistory: [],
         progress: 0 
-      })));
+      }));
+
+      // Wrap in a default group
+      const defaultGroup: SceneGroup = {
+        id: crypto.randomUUID(),
+        name: 'Sequence 01',
+        isCollapsed: false,
+        scenes: initialScenes
+      };
       
-      // Automatically generate images for all new scenes
+      this.sceneGroups.set([defaultGroup]);
+      
+      // Automatically generate images
       this.generateAllImages();
       
     } catch (error) {
-      // For script analysis, we use the main notification/alert as it's a global failure
       this.showNotification('Failed to analyze script. Please check your API key or try again.');
       console.error(error);
     } finally {
@@ -348,54 +439,60 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
-  async regenerateSceneText(scene: Scene) {
+  async regenerateSceneText(groupIndex: number, sceneIndex: number) {
+    const group = this.sceneGroups()[groupIndex];
+    const scene = group.scenes[sceneIndex];
+    
     if (scene.isRegeneratingText || !this.scriptText()) return;
 
-    this.updateSceneState(scene.sceneNumber, { 
+    this.updateSceneInGroup(groupIndex, sceneIndex, { 
       isRegeneratingText: true, 
-      errorMessage: undefined // Clear previous errors
+      errorMessage: undefined 
     });
 
     try {
       const result = await this.geminiService.regenerateScene(this.scriptText(), scene.sceneNumber);
-      
-      // Capture history before update
       const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
 
-      this.updateSceneState(scene.sceneNumber, {
+      this.updateSceneInGroup(groupIndex, sceneIndex, {
         description: result.description,
         visualPrompt: result.visualPrompt,
-        imageUrl: undefined, // Clear image as prompt changed
+        imageUrl: undefined,
         isRegeneratingText: false,
         promptHistory: [...(scene.promptHistory || []), historyItem]
       });
     } catch (error) {
       console.error(error);
-      this.updateSceneState(scene.sceneNumber, { 
+      this.updateSceneInGroup(groupIndex, sceneIndex, { 
         isRegeneratingText: false,
         errorMessage: 'Text generation failed. Please try again.'
       });
     }
   }
 
-  updateScenePrompt(scene: Scene, event: Event) {
+  updateScenePrompt(groupIndex: number, sceneIndex: number, event: Event) {
+    const group = this.sceneGroups()[groupIndex];
+    const scene = group.scenes[sceneIndex];
+    
     const newPrompt = (event.target as HTMLTextAreaElement).value;
     if (scene.visualPrompt === newPrompt) return;
 
-    // Save history
     const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
     
-    this.updateSceneState(scene.sceneNumber, {
+    this.updateSceneInGroup(groupIndex, sceneIndex, {
        visualPrompt: newPrompt,
-       imageUrl: undefined, // Clear image as prompt changed/invalidated
+       imageUrl: undefined, 
        promptHistory: [...(scene.promptHistory || []), historyItem]
     });
   }
 
-  async enhancePromptForScene(scene: Scene) {
+  async enhancePromptForScene(groupIndex: number, sceneIndex: number) {
+    const group = this.sceneGroups()[groupIndex];
+    const scene = group.scenes[sceneIndex];
+
     if (scene.isEnhancingPrompt || scene.isGenerating) return;
 
-    this.updateSceneState(scene.sceneNumber, { 
+    this.updateSceneInGroup(groupIndex, sceneIndex, { 
       isEnhancingPrompt: true,
       errorMessage: undefined 
     });
@@ -405,30 +502,32 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       
       if (enhancedPrompt !== scene.visualPrompt) {
          const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
-         this.updateSceneState(scene.sceneNumber, {
+         this.updateSceneInGroup(groupIndex, sceneIndex, {
            visualPrompt: enhancedPrompt,
            isEnhancingPrompt: false,
            promptHistory: [...(scene.promptHistory || []), historyItem]
          });
          this.showNotification('Prompt enhanced');
       } else {
-         this.updateSceneState(scene.sceneNumber, { isEnhancingPrompt: false });
+         this.updateSceneInGroup(groupIndex, sceneIndex, { isEnhancingPrompt: false });
          this.showNotification('Prompt is already optimized');
       }
     } catch (error) {
       console.error(error);
-      this.updateSceneState(scene.sceneNumber, { 
+      this.updateSceneInGroup(groupIndex, sceneIndex, { 
         isEnhancingPrompt: false,
         errorMessage: 'Prompt enhancement failed.'
       });
     }
   }
 
-  async generateImageForScene(scene: Scene) {
+  async generateImageForScene(groupIndex: number, sceneIndex: number) {
+    const group = this.sceneGroups()[groupIndex];
+    const scene = group.scenes[sceneIndex];
+    
     if (scene.isGenerating) return;
 
-    // Update specific scene state - Start
-    this.updateSceneState(scene.sceneNumber, { 
+    this.updateSceneInGroup(groupIndex, sceneIndex, { 
       isGenerating: true, 
       statusMessage: 'Enhancing prompt...',
       progress: 10,
@@ -436,35 +535,30 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     });
 
     try {
-      // 1. Enhance the prompt first
       const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
       
-      this.updateSceneState(scene.sceneNumber, {
+      this.updateSceneInGroup(groupIndex, sceneIndex, {
         progress: 40,
         statusMessage: 'Preparing render...'
       });
 
-      // Capture history if prompt changed (it almost always does)
       let historyUpdate = {};
       if (enhancedPrompt !== scene.visualPrompt) {
          const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
          historyUpdate = { promptHistory: [...(scene.promptHistory || []), historyItem] };
       }
       
-      // Update the scene with the enhanced prompt so the user sees what was used
-      this.updateSceneState(scene.sceneNumber, { 
+      this.updateSceneInGroup(groupIndex, sceneIndex, { 
         visualPrompt: enhancedPrompt,
         statusMessage: 'Rendering image...',
         progress: 60,
         ...historyUpdate
       });
 
-      // 2. Generate the image
-      // We append resolution here as a final bias
       const finalPrompt = `${enhancedPrompt}, ${this.selectedResolution()} resolution`;
       const imageUrl = await this.geminiService.generateImage(finalPrompt, this.selectedAspectRatio());
       
-      this.updateSceneState(scene.sceneNumber, { 
+      this.updateSceneInGroup(groupIndex, sceneIndex, { 
         imageUrl, 
         isGenerating: false,
         statusMessage: undefined,
@@ -473,17 +567,12 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
 
     } catch (error: any) {
       console.error('Image Generation Error:', error);
-      
       let friendlyError = 'Image generation failed.';
-      if (error.message?.includes('429')) {
-        friendlyError = 'Usage limit exceeded. Please wait a moment.';
-      } else if (error.message?.includes('safety')) {
-        friendlyError = 'Generation blocked by safety settings. Try a different prompt.';
-      } else {
-         friendlyError = 'Connection interrupted. Please retry.';
-      }
+      if (error.message?.includes('429')) friendlyError = 'Usage limit exceeded.';
+      else if (error.message?.includes('safety')) friendlyError = 'Blocked by safety settings.';
+      else friendlyError = 'Connection interrupted.';
 
-      this.updateSceneState(scene.sceneNumber, { 
+      this.updateSceneInGroup(groupIndex, sceneIndex, { 
         isGenerating: false,
         statusMessage: 'Failed',
         errorMessage: friendlyError,
@@ -493,23 +582,29 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   }
 
   async generateAllImages() {
-    const currentScenes = this.scenes();
-    for (const scene of currentScenes) {
-      if (!scene.imageUrl && !scene.isGenerating) {
-        await this.generateImageForScene(scene);
+    const groups = this.sceneGroups();
+    for (let g = 0; g < groups.length; g++) {
+      for (let s = 0; s < groups[g].scenes.length; s++) {
+        const scene = groups[g].scenes[s];
+        if (!scene.imageUrl && !scene.isGenerating) {
+          await this.generateImageForScene(g, s);
+        }
       }
     }
   }
 
-  revertToPreviousVersion(scene: Scene) {
+  revertToPreviousVersion(groupIndex: number, sceneIndex: number) {
+    const group = this.sceneGroups()[groupIndex];
+    const scene = group.scenes[sceneIndex];
+    
     if (!scene.promptHistory || scene.promptHistory.length === 0) return;
     
     const previous = scene.promptHistory[scene.promptHistory.length - 1];
     const newHistory = scene.promptHistory.slice(0, -1);
     
-    this.updateSceneState(scene.sceneNumber, {
+    this.updateSceneInGroup(groupIndex, sceneIndex, {
       visualPrompt: previous.prompt,
-      imageUrl: previous.imageUrl, // Restore image if it exists in history
+      imageUrl: previous.imageUrl,
       promptHistory: newHistory,
       statusMessage: undefined,
       errorMessage: undefined,
@@ -517,10 +612,14 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     });
   }
 
-  private updateSceneState(sceneNumber: number, updates: Partial<Scene>) {
-    this.scenes.update(prev => 
-      prev.map(s => s.sceneNumber === sceneNumber ? { ...s, ...updates } : s)
-    );
+  private updateSceneInGroup(groupIndex: number, sceneIndex: number, updates: Partial<Scene>) {
+    this.sceneGroups.update(groups => {
+      const newGroups = [...groups];
+      const newScenes = [...newGroups[groupIndex].scenes];
+      newScenes[sceneIndex] = { ...newScenes[sceneIndex], ...updates };
+      newGroups[groupIndex] = { ...newGroups[groupIndex], scenes: newScenes };
+      return newGroups;
+    });
     this.triggerUpdate();
   }
 
@@ -535,7 +634,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     const text = this.chatInput().trim();
     if (!text || this.isChatSending()) return;
 
-    // Add user message
     this.chatMessages.update(msgs => [...msgs, { role: 'user', text }]);
     this.chatInput.set('');
     this.isChatSending.set(true);
@@ -579,7 +677,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   onScriptInput(event: Event) {
     const val = (event.target as HTMLTextAreaElement).value;
     this.scriptText.set(val);
-    // Trigger update so the button disabled state re-evaluates
     this.triggerUpdate();
   }
   
@@ -601,10 +698,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     this.triggerUpdate();
   }
 
-  // Safely trigger change detection for the whole app
   private triggerUpdate() {
-    // We use setTimeout to decouple from the current execution stack (e.g. event handlers)
-    // and ensure we don't violate signal graph update phases.
     setTimeout(() => {
       this.appRef.tick();
     }, 0);

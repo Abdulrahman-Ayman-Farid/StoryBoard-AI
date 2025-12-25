@@ -326,7 +326,7 @@
             <!-- Right Panel: Canvas -->
             <div class="flex-grow p-6 md:p-10 overflow-y-auto relative bg-gradient-to-br from-transparent to-black/30">
             
-            @if (scenes().length === 0 && !isAnalyzing()) {
+            @if (sceneGroups().length === 0 && !isAnalyzing()) {
                 <div class="h-full flex flex-col items-center justify-center opacity-40">
                 <div class="relative mb-8">
                     <div class="absolute inset-0 bg-indigo-500/30 blur-[60px] rounded-full animate-pulse"></div>
@@ -338,217 +338,263 @@
                 </div>
             }
 
-            @if (scenes().length > 0) {
-                <div class="flex justify-between items-center mb-10 sticky top-0 z-10 py-4 -my-4">
-                <h2 class="text-4xl font-thin tracking-tighter text-white drop-shadow-xl pl-2">Sequence <span class="text-white/20 font-bold">01</span></h2>
-                <button (click)="generateAllImages()" class="px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-white/20 text-indigo-200 hover:text-white text-sm font-medium transition-all backdrop-blur-xl flex items-center gap-3 hover:shadow-[0_0_25px_rgba(79,70,229,0.25)] group">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="hidden sm:inline tracking-wide">Render Sequence</span>
-                    <span class="sm:hidden">Render</span>
-                </button>
+            @if (sceneGroups().length > 0) {
+                <div class="flex justify-between items-center mb-10 sticky top-0 z-10 py-4 -my-4 bg-gray-900/60 backdrop-blur-md -mx-6 px-6 border-b border-white/5">
+                    <h2 class="text-4xl font-thin tracking-tighter text-white drop-shadow-xl pl-2">Timeline</h2>
+                    <button (click)="generateAllImages()" class="px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-white/20 text-indigo-200 hover:text-white text-sm font-medium transition-all backdrop-blur-xl flex items-center gap-3 hover:shadow-[0_0_25px_rgba(79,70,229,0.25)] group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="hidden sm:inline tracking-wide">Render All Scenes</span>
+                        <span class="sm:hidden">Render</span>
+                    </button>
                 </div>
 
-                <!-- Adaptive Grid System -->
-                <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 pb-32">
-                @for (scene of scenes(); track scene.sceneNumber; let i = $index) {
-                    <!-- Ultra Glass Card Draggable -->
-                    <div 
-                        draggable="true"
-                        (dragstart)="onDragStart($event, i)"
-                        (dragover)="onDragOver($event, i)"
-                        (dragleave)="onDragLeave($event)"
-                        (drop)="onDrop($event, i)"
-                        (dragend)="onDragEnd($event)"
-                        [class.opacity-50]="draggedIndex() === i"
-                        [class.border-indigo-500]="dragOverIndex() === i"
-                        [class.scale-[0.98]]="dragOverIndex() === i"
-                        class="group relative bg-white/[0.02] backdrop-blur-[20px] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-default hover:bg-white/[0.04]">
-                    
-                    <!-- Image Container with Dynamic Aspect Ratio -->
-                    <div 
-                        class="relative bg-black/50 overflow-hidden flex items-center justify-center transition-all duration-700 m-2 rounded-[2rem] border border-white/5" 
-                        [style.aspect-ratio]="aspectRatioStyle()">
-                        
-                        @if (scene.imageUrl) {
-                        <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 select-none" alt="Scene {{ scene.sceneNumber }}">
-                        
-                        <!-- Overlay for Regeneration Status -->
-                        @if (scene.isGenerating) {
-                            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-20 animate-fade-in transition-all">
-                            <div class="relative w-12 h-12 mb-3">
-                                <div class="absolute inset-0 rounded-full border-t-2 border-indigo-400 animate-spin"></div>
-                                <div class="absolute inset-2 rounded-full border-b-2 border-purple-400 animate-spin reverse"></div>
-                            </div>
-                            <span class="text-white/90 text-xs tracking-widest uppercase font-bold animate-pulse shadow-black drop-shadow-md mb-2">
-                                {{ scene.statusMessage || 'Processing...' }}
-                            </span>
-                             <!-- Progress Bar -->
-                            <div class="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" [style.width.%]="scene.progress || 0"></div>
-                            </div>
-                            </div>
-                        }
-
-                        <!-- Floating Controls -->
-                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 translate-y-[-10px] group-hover:translate-y-0">
-                            <!-- Regenerate Image Button -->
-                            <button (click)="generateImageForScene(scene)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="p-3 rounded-full bg-black/40 backdrop-blur-xl text-white hover:bg-indigo-600 border border-white/10 transition-colors disabled:opacity-50 shadow-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <!-- Groups Loop -->
+                <div class="space-y-12 pb-32">
+                @for (group of sceneGroups(); track group.id; let groupIndex = $index) {
+                    <div class="relative">
+                        <!-- Group Header -->
+                        <div class="flex items-center gap-4 mb-6 group/header">
+                            <button (click)="toggleGroupCollapse(groupIndex)" class="p-2 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-300" [class.rotate-[-90deg]]="group.isCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-
-                            <!-- Download Button -->
-                            <a [href]="scene.imageUrl" download="scene_{{scene.sceneNumber}}.jpg" class="p-3 rounded-full bg-black/40 backdrop-blur-xl text-white hover:bg-white/20 border border-white/10 transition-colors shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            </a>
-                        </div>
-                        } @else {
-                        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02),transparent_70%)]"></div>
-                        <div class="text-center p-8 z-10 w-full px-12">
-                            @if (scene.isGenerating) {
-                            <div class="flex flex-col items-center gap-4 w-full">
-                                <div class="relative w-14 h-14">
-                                    <div class="absolute inset-0 rounded-full border-t border-indigo-400 animate-spin"></div>
-                                    <div class="absolute inset-2 rounded-full border-b border-purple-400 animate-spin reverse"></div>
-                                    <div class="absolute inset-[30%] bg-indigo-500/20 blur-md rounded-full animate-pulse"></div>
-                                </div>
-                                <div class="flex flex-col items-center gap-2 w-full">
-                                    <span class="text-white/80 text-[10px] tracking-[0.2em] uppercase font-bold animate-pulse">
-                                    {{ scene.statusMessage || 'Initializing...' }}
-                                    </span>
-                                    <!-- Progress Bar -->
-                                    <div class="w-40 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" [style.width.%]="scene.progress || 0"></div>
-                                    </div>
-                                </div>
+                            
+                            <div class="flex-grow">
+                                <input 
+                                    [value]="group.name" 
+                                    (change)="updateGroupName(groupIndex, $event)"
+                                    class="bg-transparent text-2xl font-light text-white placeholder-white/20 border-b border-transparent hover:border-white/10 focus:border-indigo-500 focus:outline-none w-full transition-all pb-1"
+                                    placeholder="Section Name"
+                                />
+                                <div class="text-[10px] text-white/30 uppercase tracking-widest mt-1">{{ group.scenes.length }} Scenes</div>
                             </div>
-                            } @else {
-                            @if (scene.errorMessage && !scene.imageUrl) {
-                                <!-- Error State Overlay -->
-                                <div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-900/20 backdrop-blur-sm p-6 text-center animate-fade-in">
-                                <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3 border border-red-500/20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                </div>
-                                <p class="text-red-200 font-medium text-sm mb-1">Interrupted</p>
-                                <p class="text-red-200/60 text-xs mb-4 max-w-[200px]">{{ scene.errorMessage }}</p>
-                                <button (click)="generateImageForScene(scene)" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-colors">
-                                    Retry
-                                </button>
-                                </div>
-                            } @else {
-                                <button (click)="generateImageForScene(scene)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed group/btn">
-                                <span class="group-hover/btn:scale-105 inline-block transition-transform">Generate Frame</span>
-                                </button>
-                            }
-                            }
-                        </div>
-                        }
-                        
-                        <!-- Scene Tag -->
-                        <div class="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/60 backdrop-blur-xl border border-white/10 text-white/90 text-[10px] font-bold tracking-widest uppercase shadow-lg z-20 select-none">
-                        {{ scene.sceneNumber | number:'2.0' }}
-                        </div>
-
-                        <!-- Drag Handle -->
-                        <div class="absolute top-4 left-16 ml-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-xl border border-white/5 text-white/40 hover:text-white transition-colors z-20 cursor-move group-hover:bg-black/60">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Content Area -->
-                    <div class="p-6 relative">
-                        
-                        <!-- Action Bar for Text -->
-                        <div class="flex justify-between items-start mb-4">
-                            <p class="text-gray-400 font-light text-sm leading-relaxed flex-grow mr-4 select-text line-clamp-4 hover:line-clamp-none transition-all duration-300">{{ scene.description }}</p>
-                            <button (click)="regenerateSceneText(scene)" [disabled]="scene.isRegeneratingText" class="text-white/20 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-white/5 disabled:opacity-50 flex-shrink-0">
-                                @if (scene.isRegeneratingText) {
-                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                } @else {
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                }
+                            
+                            <button (click)="deleteGroup(groupIndex)" class="opacity-0 group-hover/header:opacity-100 p-2 rounded-lg text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-all" title="Delete Section">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
                             </button>
                         </div>
 
-                        <!-- Text Generation Error Inline -->
-                        @if (scene.errorMessage && !scene.imageUrl && !scene.isGenerating) {
-                        <!-- Handled in image area -->
-                        } @else if (scene.errorMessage) {
-                        <div class="mb-4 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-2">
-                            <span class="text-xs text-red-300">{{ scene.errorMessage }}</span>
-                            <button (click)="scene.errorMessage?.includes('Prompt') ? enhancePromptForScene(scene) : regenerateSceneText(scene)" class="text-xs text-red-200 hover:text-white underline decoration-red-500/50">Retry</button>
-                        </div>
-                        }
+                        <!-- Scenes Grid -->
+                        @if (!group.isCollapsed) {
+                            <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 pl-4 border-l border-white/5 ml-3">
+                            @for (scene of group.scenes; track scene.sceneNumber; let sceneIndex = $index) {
+                                <!-- Ultra Glass Card Draggable -->
+                                <div 
+                                    draggable="true"
+                                    (dragstart)="onDragStart($event, groupIndex, sceneIndex)"
+                                    (dragover)="onDragOver($event, groupIndex, sceneIndex)"
+                                    (dragleave)="onDragLeave($event)"
+                                    (drop)="onDrop($event, groupIndex, sceneIndex)"
+                                    (dragend)="onDragEnd($event)"
+                                    [class.opacity-50]="draggedGroupIndex() === groupIndex && draggedSceneIndex() === sceneIndex"
+                                    [class.border-indigo-500]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex"
+                                    [class.scale-[0.98]]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex"
+                                    class="group relative bg-white/[0.02] backdrop-blur-[20px] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] cursor-default hover:bg-white/[0.04]">
+                                
+                                <!-- Image Container with Dynamic Aspect Ratio -->
+                                <div 
+                                    class="relative bg-black/50 overflow-hidden flex items-center justify-center transition-all duration-700 m-2 rounded-[2rem] border border-white/5" 
+                                    [style.aspect-ratio]="aspectRatioStyle()">
+                                    
+                                    @if (scene.imageUrl) {
+                                    <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 select-none" alt="Scene {{ scene.sceneNumber }}">
+                                    
+                                    <!-- Overlay for Regeneration Status -->
+                                    @if (scene.isGenerating) {
+                                        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-20 animate-fade-in transition-all">
+                                        <div class="relative w-12 h-12 mb-3">
+                                            <div class="absolute inset-0 rounded-full border-t-2 border-indigo-400 animate-spin"></div>
+                                            <div class="absolute inset-2 rounded-full border-b-2 border-purple-400 animate-spin reverse"></div>
+                                        </div>
+                                        <span class="text-white/90 text-xs tracking-widest uppercase font-bold animate-pulse shadow-black drop-shadow-md mb-2">
+                                            {{ scene.statusMessage || 'Processing...' }}
+                                        </span>
+                                        <!-- Progress Bar -->
+                                        <div class="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" [style.width.%]="scene.progress || 0"></div>
+                                        </div>
+                                        </div>
+                                    }
 
-                        <div class="relative group/prompt cursor-help">
-                        <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover/prompt:opacity-100 transition-opacity blur-md"></div>
-                        <div class="relative bg-black/40 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-                            
-                            <!-- History and Enhance Controls -->
-                            <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
-                            <div class="flex items-center gap-3">
-                                <span class="text-[9px] uppercase tracking-[0.15em] text-indigo-400 font-bold select-none">
-                                    Visual Prompt v{{ (scene.promptHistory?.length || 0) + 1 }}
-                                </span>
-                                <!-- Enhance Button -->
-                                <button (click)="enhancePromptForScene(scene)" 
-                                        [disabled]="scene.isEnhancingPrompt || scene.isGenerating"
-                                        class="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-[10px] font-medium text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group/enhance">
-                                        @if (scene.isEnhancingPrompt) {
-                                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <!-- Floating Controls -->
+                                    <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 translate-y-[-10px] group-hover:translate-y-0">
+                                        <!-- Regenerate Image Button -->
+                                        <button (click)="generateImageForScene(groupIndex, sceneIndex)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="p-3 rounded-full bg-black/40 backdrop-blur-xl text-white hover:bg-indigo-600 border border-white/10 transition-colors disabled:opacity-50 shadow-lg">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
+                                        </button>
+
+                                        <!-- Download Button -->
+                                        <a [href]="scene.imageUrl" download="scene_{{scene.sceneNumber}}.jpg" class="p-3 rounded-full bg-black/40 backdrop-blur-xl text-white hover:bg-white/20 border border-white/10 transition-colors shadow-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        </a>
+                                    </div>
+                                    } @else {
+                                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02),transparent_70%)]"></div>
+                                    <div class="text-center p-8 z-10 w-full px-12">
+                                        @if (scene.isGenerating) {
+                                        <div class="flex flex-col items-center gap-4 w-full">
+                                            <div class="relative w-14 h-14">
+                                                <div class="absolute inset-0 rounded-full border-t border-indigo-400 animate-spin"></div>
+                                                <div class="absolute inset-2 rounded-full border-b border-purple-400 animate-spin reverse"></div>
+                                                <div class="absolute inset-[30%] bg-indigo-500/20 blur-md rounded-full animate-pulse"></div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-2 w-full">
+                                                <span class="text-white/80 text-[10px] tracking-[0.2em] uppercase font-bold animate-pulse">
+                                                {{ scene.statusMessage || 'Initializing...' }}
+                                                </span>
+                                                <!-- Progress Bar -->
+                                                <div class="w-40 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
+                                                    <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" [style.width.%]="scene.progress || 0"></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         } @else {
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 group-hover/enhance:text-white transition-colors">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 00-1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-                                            </svg>
+                                        @if (scene.errorMessage && !scene.imageUrl) {
+                                            <!-- Error State Overlay -->
+                                            <div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-900/20 backdrop-blur-sm p-6 text-center animate-fade-in">
+                                            <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3 border border-red-500/20">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <p class="text-red-200 font-medium text-sm mb-1">Interrupted</p>
+                                            <p class="text-red-200/60 text-xs mb-4 max-w-[200px]">{{ scene.errorMessage }}</p>
+                                            <button (click)="generateImageForScene(groupIndex, sceneIndex)" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-colors">
+                                                Retry
+                                            </button>
+                                            </div>
+                                        } @else {
+                                            <button (click)="generateImageForScene(groupIndex, sceneIndex)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed group/btn">
+                                            <span class="group-hover/btn:scale-105 inline-block transition-transform">Generate Frame</span>
+                                            </button>
                                         }
-                                        <span class="tracking-wide">AI Enhance</span>
-                                </button>
-                            </div>
+                                        }
+                                    </div>
+                                    }
+                                    
+                                    <!-- Scene Tag -->
+                                    <div class="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/60 backdrop-blur-xl border border-white/10 text-white/90 text-[10px] font-bold tracking-widest uppercase shadow-lg z-20 select-none">
+                                    {{ scene.sceneNumber | number:'2.0' }}
+                                    </div>
 
-                            @if (scene.promptHistory && scene.promptHistory.length > 0) {
-                                <button (click)="revertToPreviousVersion(scene)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 group/revert">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 group-hover/revert:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                    </svg>
-                                Revert
-                                </button>
+                                    <!-- Drag Handle -->
+                                    <div class="absolute top-4 left-16 ml-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-xl border border-white/5 text-white/40 hover:text-white transition-colors z-20 cursor-move group-hover:bg-black/60">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Content Area -->
+                                <div class="p-6 relative">
+                                    
+                                    <!-- Action Bar for Text -->
+                                    <div class="flex justify-between items-start mb-4">
+                                        <p class="text-gray-400 font-light text-sm leading-relaxed flex-grow mr-4 select-text line-clamp-4 hover:line-clamp-none transition-all duration-300">{{ scene.description }}</p>
+                                        <button (click)="regenerateSceneText(groupIndex, sceneIndex)" [disabled]="scene.isRegeneratingText" class="text-white/20 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-white/5 disabled:opacity-50 flex-shrink-0">
+                                            @if (scene.isRegeneratingText) {
+                                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            } @else {
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            }
+                                        </button>
+                                    </div>
+
+                                    <!-- Text Generation Error Inline -->
+                                    @if (scene.errorMessage && !scene.imageUrl && !scene.isGenerating) {
+                                    <!-- Handled in image area -->
+                                    } @else if (scene.errorMessage) {
+                                    <div class="mb-4 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-2">
+                                        <span class="text-xs text-red-300">{{ scene.errorMessage }}</span>
+                                        <button (click)="scene.errorMessage?.includes('Prompt') ? enhancePromptForScene(groupIndex, sceneIndex) : regenerateSceneText(groupIndex, sceneIndex)" class="text-xs text-red-200 hover:text-white underline decoration-red-500/50">Retry</button>
+                                    </div>
+                                    }
+
+                                    <div class="relative group/prompt cursor-help">
+                                    <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover/prompt:opacity-100 transition-opacity blur-md"></div>
+                                    <div class="relative bg-black/40 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                                        
+                                        <!-- History and Enhance Controls -->
+                                        <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-[9px] uppercase tracking-[0.15em] text-indigo-400 font-bold select-none">
+                                                Visual Prompt v{{ (scene.promptHistory?.length || 0) + 1 }}
+                                            </span>
+                                            <!-- Enhance Button -->
+                                            <button (click)="enhancePromptForScene(groupIndex, sceneIndex)" 
+                                                    [disabled]="scene.isEnhancingPrompt || scene.isGenerating"
+                                                    class="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-[10px] font-medium text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group/enhance">
+                                                    @if (scene.isEnhancingPrompt) {
+                                                    <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    } @else {
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 group-hover/enhance:text-white transition-colors">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 00-1.423 1.423z" />
+                                                        </svg>
+                                                    }
+                                                    <span class="tracking-wide">AI Enhance</span>
+                                            </button>
+                                        </div>
+
+                                        @if (scene.promptHistory && scene.promptHistory.length > 0) {
+                                            <button (click)="revertToPreviousVersion(groupIndex, sceneIndex)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 group/revert">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 group-hover/revert:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                </svg>
+                                            Revert
+                                            </button>
+                                        }
+                                        </div>
+
+                                        @if (scene.isRegeneratingText) {
+                                            <div class="h-4 w-3/4 bg-white/10 rounded animate-pulse mb-2"></div>
+                                            <div class="h-4 w-1/2 bg-white/10 rounded animate-pulse"></div>
+                                        } @else {
+                                            <textarea
+                                                [value]="scene.visualPrompt"
+                                                (change)="updateScenePrompt(groupIndex, sceneIndex, $event)"
+                                                class="w-full bg-transparent text-white/60 text-xs italic font-serif tracking-wide border-none outline-none resize-none placeholder-white/20 hover:text-white/80 transition-colors focus:bg-white/5 rounded p-2 -ml-2"
+                                                rows="3"
+                                            ></textarea>
+                                        }
+                                    </div>
+                                    </div>
+                                </div>
+                                </div>
                             }
                             </div>
-
-                            @if (scene.isRegeneratingText) {
-                                <div class="h-4 w-3/4 bg-white/10 rounded animate-pulse mb-2"></div>
-                                <div class="h-4 w-1/2 bg-white/10 rounded animate-pulse"></div>
-                            } @else {
-                                <textarea
-                                    [value]="scene.visualPrompt"
-                                    (change)="updateScenePrompt(scene, $event)"
-                                    class="w-full bg-transparent text-white/60 text-xs italic font-serif tracking-wide border-none outline-none resize-none placeholder-white/20 hover:text-white/80 transition-colors focus:bg-white/5 rounded p-2 -ml-2"
-                                    rows="3"
-                                ></textarea>
-                            }
-                        </div>
-                        </div>
-                    </div>
+                        }
                     </div>
                 }
+
+                <!-- Add New Group Button -->
+                <div class="flex justify-center mt-8">
+                    <button (click)="addNewGroup()" class="px-8 py-4 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 text-white/40 hover:text-white transition-all flex items-center gap-3 group">
+                        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </div>
+                        <span class="tracking-wide text-sm font-medium">Add New Section</span>
+                    </button>
+                </div>
                 </div>
             }
             </div>
