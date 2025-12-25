@@ -56,6 +56,43 @@ export class GeminiService {
     }
   }
 
+  async regenerateScene(script: string, sceneNumber: number): Promise<{ description: string, visualPrompt: string }> {
+    const model = 'gemini-2.5-flash';
+    const prompt = `
+      You are an expert storyboard artist.
+      Refine and rewrite the details for Scene ${sceneNumber} based on the script provided below.
+      Provide a NEW, improved description and a high-quality visual prompt. Try to make it distinct from a generic interpretation.
+      
+      Return the response in strictly valid JSON format.
+    `;
+
+    try {
+      const response = await this.ai.models.generateContent({
+        model: model,
+        contents: [
+          { role: 'user', parts: [{ text: prompt }] },
+          { role: 'user', parts: [{ text: script }] }
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              description: { type: Type.STRING },
+              visualPrompt: { type: Type.STRING }
+            }
+          }
+        }
+      });
+
+      const jsonStr = response.text || '{}';
+      return JSON.parse(jsonStr);
+    } catch (error) {
+      console.error('Error regenerating scene:', error);
+      throw error;
+    }
+  }
+
   async generateImage(prompt: string, aspectRatio: string = '16:9'): Promise<string> {
     const model = 'imagen-4.0-generate-001';
     

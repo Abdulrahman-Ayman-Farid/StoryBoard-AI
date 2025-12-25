@@ -8,6 +8,7 @@ interface Scene {
   visualPrompt: string;
   imageUrl?: string;
   isGenerating?: boolean;
+  isRegeneratingText?: boolean;
 }
 
 interface ChatMessage {
@@ -60,13 +61,33 @@ export class AppComponent {
 
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
-      this.scenes.set(result.map((s: any) => ({ ...s, isGenerating: false })));
+      this.scenes.set(result.map((s: any) => ({ ...s, isGenerating: false, isRegeneratingText: false })));
     } catch (error) {
       alert('Failed to analyze script. Please try again.');
       console.error(error);
     } finally {
       this.isAnalyzing.set(false);
       this.triggerUpdate();
+    }
+  }
+
+  async regenerateSceneText(scene: Scene) {
+    if (scene.isRegeneratingText || !this.scriptText()) return;
+
+    this.updateSceneState(scene.sceneNumber, { isRegeneratingText: true });
+
+    try {
+      const result = await this.geminiService.regenerateScene(this.scriptText(), scene.sceneNumber);
+      this.updateSceneState(scene.sceneNumber, {
+        description: result.description,
+        visualPrompt: result.visualPrompt,
+        imageUrl: undefined, // Clear image as prompt changed
+        isRegeneratingText: false
+      });
+    } catch (error) {
+      console.error(error);
+      this.updateSceneState(scene.sceneNumber, { isRegeneratingText: false });
+      alert(`Failed to regenerate text for Scene ${scene.sceneNumber}`);
     }
   }
 
