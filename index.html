@@ -9,48 +9,82 @@
   <style>
     body { 
       font-family: 'Inter', sans-serif; 
-      background-color: #030712; /* Deepest black/blue */
+      background-color: #030712;
       color: #f3f4f6;
-      overflow: hidden; /* App handles scrolling */
+      overflow: hidden;
     }
     
-    /* Ambient Liquid Background */
-    .ambient-glow {
+    /* Liquid Background System */
+    .liquid-container {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       z-index: -1;
-      background: 
-        radial-gradient(circle at 15% 50%, rgba(67, 56, 202, 0.25), transparent 45%),
-        radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 40%),
-        radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.15), transparent 45%);
-      filter: blur(80px);
-      animation: breathe 15s ease-in-out infinite alternate;
+      overflow: hidden;
+      background: #020617; /* Slate 950 base */
     }
 
-    @keyframes breathe {
-      0% { opacity: 0.8; transform: scale(1); }
-      100% { opacity: 1; transform: scale(1.05); }
+    .liquid-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.5;
+      animation: drift 20s infinite alternate ease-in-out;
     }
 
-    /* Ultra-thin scrollbar for Glass UI */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    /* Orb Configurations */
+    .orb-1 {
+      top: -10%;
+      left: -10%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, #4f46e5, transparent 70%);
+      animation-duration: 25s;
+    }
+    .orb-2 {
+      bottom: -20%;
+      right: -20%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, #9333ea, transparent 70%);
+      animation-duration: 30s;
+      animation-delay: -5s;
+    }
+    .orb-3 {
+      top: 40%;
+      left: 30%;
+      width: 40vw;
+      height: 40vw;
+      background: radial-gradient(circle, #06b6d4, transparent 70%);
+      animation-duration: 35s;
+      animation-delay: -10s;
+      opacity: 0.3;
+    }
 
-    /* Keyframe Animations */
-    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-    .animate-slide-up { animation: slideUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
-    .animate-scale-up { animation: scaleUp 0.3s ease-out forwards; }
-    .animate-gradient-x { background-size: 200% 200%; animation: gradientX 5s ease infinite; }
+    /* Animation Keyframes */
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(50px, -30px) scale(1.1); }
+      100% { transform: translate(-20px, 40px) scale(0.95); }
+    }
+
+    .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+    .animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
+    .animate-scale-up { animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-gradient-x { background-size: 200% 200%; animation: gradientX 6s ease infinite; }
     
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes scaleUp { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @keyframes gradientX { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    /* Custom Scrollbar for Glass UI */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
   </style>
 <script type="importmap">
 {
@@ -73,7 +107,11 @@
 </script>
 </head>
 <body>
-  <div class="ambient-glow"></div>
+  <div class="liquid-container">
+    <div class="liquid-orb orb-1"></div>
+    <div class="liquid-orb orb-2"></div>
+    <div class="liquid-orb orb-3"></div>
+  </div>
   <app-root></app-root>
 </body>
 </html>
