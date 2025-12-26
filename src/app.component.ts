@@ -310,6 +310,66 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     );
   }
 
+  splitGroup(groupIndex: number, sceneIndex: number) {
+    // Only split if not the first scene (makes no sense to create an empty group above)
+    if (sceneIndex <= 0) return;
+
+    this.sceneGroups.update(groups => {
+      const currentGroups = [...groups];
+      const sourceGroup = currentGroups[groupIndex];
+      
+      const scenesBefore = sourceGroup.scenes.slice(0, sceneIndex);
+      const scenesAfter = sourceGroup.scenes.slice(sceneIndex);
+      
+      // Update current group
+      currentGroups[groupIndex] = {
+        ...sourceGroup,
+        scenes: scenesBefore
+      };
+      
+      // Create new group
+      const newGroup: SceneGroup = {
+        id: crypto.randomUUID(),
+        name: `${sourceGroup.name} (Part 2)`,
+        isCollapsed: false,
+        scenes: scenesAfter
+      };
+      
+      // Insert new group after
+      currentGroups.splice(groupIndex + 1, 0, newGroup);
+      
+      return currentGroups;
+    });
+    this.showNotification('Section split successfully');
+    this.triggerUpdate();
+  }
+
+  mergeWithPrevious(groupIndex: number) {
+    if (groupIndex === 0) return;
+    
+    this.sceneGroups.update(groups => {
+        const currentGroups = [...groups];
+        const prevGroup = currentGroups[groupIndex - 1];
+        const currGroup = currentGroups[groupIndex];
+        
+        // Merge scenes
+        const mergedScenes = [...prevGroup.scenes, ...currGroup.scenes];
+        
+        // Update previous group
+        currentGroups[groupIndex - 1] = {
+            ...prevGroup,
+            scenes: mergedScenes
+        };
+        
+        // Remove current group
+        currentGroups.splice(groupIndex, 1);
+        
+        return currentGroups;
+    });
+    this.showNotification('Sections merged');
+    this.triggerUpdate();
+  }
+
   // --- Versioning / Snapshots ---
 
   toggleHistory() {
