@@ -372,9 +372,10 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
-  onDragOver(event: DragEvent, groupIndex: number, sceneIndex: number) {
+  onDragOverScene(event: DragEvent, groupIndex: number, sceneIndex: number) {
     event.preventDefault(); 
-    
+    event.stopPropagation(); // Stop bubbling to group
+
     if (this.dragOverGroupIndex() !== groupIndex || this.dragOverSceneIndex() !== sceneIndex) {
       this.dragOverGroupIndex.set(groupIndex);
       this.dragOverSceneIndex.set(sceneIndex);
@@ -386,14 +387,29 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
-  onDrop(event: DragEvent, targetGroupIndex: number, targetSceneIndex: number) {
+  onDragOverGroup(event: DragEvent, groupIndex: number) {
     event.preventDefault();
+    // Only highlight group if we are not highlighting a specific scene
+    if (this.dragOverGroupIndex() !== groupIndex || this.dragOverSceneIndex() !== null) {
+      this.dragOverGroupIndex.set(groupIndex);
+      this.dragOverSceneIndex.set(null); // Null means targeting the group (append)
+      this.triggerUpdate();
+    }
+    
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onDrop(event: DragEvent, targetGroupIndex: number, targetSceneIndex: number | null) {
+    event.preventDefault();
+    event.stopPropagation();
     const sourceGroupIndex = this.draggedGroupIndex();
     const sourceSceneIndex = this.draggedSceneIndex();
     
     if (sourceGroupIndex !== null && sourceSceneIndex !== null) {
       this.moveScene(sourceGroupIndex, sourceSceneIndex, targetGroupIndex, targetSceneIndex);
-      this.showNotification('Scene moved');
+      this.showNotification(targetSceneIndex === null ? 'Scene moved to end of section' : 'Scene moved');
     }
     
     this.resetDragState();
@@ -415,14 +431,47 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     this.triggerUpdate();
   }
 
-  private moveScene(fromGroupIdx: number, fromSceneIdx: number, toGroupIdx: number, toSceneIdx: number) {
+  private moveScene(fromGroupIdx: number, fromSceneIdx: number, toGroupIdx: number, toSceneIdx: number | null) {
     const groups = JSON.parse(JSON.stringify(this.sceneGroups()));
     
+    // 1. Remove from Source
     const [movedScene] = groups[fromGroupIdx].scenes.splice(fromSceneIdx, 1);
     
-    let finalTargetIndex = toSceneIdx;
-    
-    groups[toGroupIdx].scenes.splice(finalTargetIndex, 0, movedScene);
+    // 2. Insert into Target
+    if (toSceneIdx === null) {
+        // Append to end of group
+        groups[toGroupIdx].scenes.push(movedScene);
+    } else {
+        // Calculate insertion index
+        // If moving within same group and we are moving down (from < to),
+        // we essentially want to place it *after* the item that was at toSceneIdx *before* splice.
+        // Because of the splice (removal), indices shift down. 
+        // Example: [A, B, C]. Move A(0) to drop on C(2).
+        // Remove A -> [B, C]. C is now at index 1.
+        // We want result [B, C, A] (Insert After C). 
+        // toSceneIdx was 2. Splice at 2 in [B, C] -> [B, C, A]. Correct.
+        
+        // Example: [A, B, C]. Move C(2) to drop on A(0).
+        // Remove C -> [A, B].
+        // We want result [C, A, B] (Insert Before A).
+        // toSceneIdx was 0. Splice at 0 in [A, B] -> [C, A, B]. Correct.
+
+        // Standard "Insert Before Target" logic implies:
+        // When I drag A onto B, I want A to be before B.
+        // [A, B, C]. Drag A(0) onto B(1).
+        // Remove A -> [B, C].
+        // toSceneIdx=1. Splice at 1 -> [B, A, C]. Wait, this is "After".
+        // To strictly "Insert Before", if I target B(1) and remove A(0), 
+        // B shifts to 0. So I should insert at 0.
+        // So if fromGroup == toGroup and fromIdx < toIdx, we must decrement target index.
+        
+        let targetIndex = toSceneIdx;
+        if (fromGroupIdx === toGroupIdx && fromSceneIdx < toSceneIdx) {
+            targetIndex--;
+        }
+        
+        groups[toGroupIdx].scenes.splice(targetIndex, 0, movedScene);
+    }
     
     this.sceneGroups.set(groups);
   }
