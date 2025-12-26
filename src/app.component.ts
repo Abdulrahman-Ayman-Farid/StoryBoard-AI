@@ -4,6 +4,7 @@ import { Chat, GenerateContentResponse } from '@google/genai';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
 interface Scene {
+  id: string; // Unique identifier for stable lookups
   sceneNumber: number;
   description: string;
   visualPrompt: string;
@@ -32,7 +33,7 @@ interface ChatMessage {
 // Data shape for a single version
 interface ProjectData {
   script: string;
-  sceneGroups: SceneGroup[]; // Updated from scenes: Scene[]
+  sceneGroups: SceneGroup[];
   aspectRatio: string;
   resolution: string;
   timestamp: number;
@@ -113,6 +114,32 @@ export class AppComponent {
     this.addBotMessage("Hello! I'm your Storyboard Assistant. How can I help you with your script today?");
   }
 
+  private addBotMessage(text: string) {
+    this.chatMessages.update(msgs => [...msgs, { role: 'model', text }]);
+    this.triggerUpdate();
+  }
+
+  async sendChatMessage() {
+    const text = this.chatInput().trim();
+    if (!text || !this.chatSession || this.isChatSending()) return;
+
+    this.isChatSending.set(true);
+    this.chatMessages.update(msgs => [...msgs, { role: 'user', text }]);
+    this.chatInput.set('');
+    this.triggerUpdate();
+
+    try {
+      const response = await this.chatSession.sendMessage({ message: text });
+      this.addBotMessage(response.text || 'I could not generate a response.');
+    } catch (err) {
+      console.error('Chat error:', err);
+      this.addBotMessage('Sorry, I encountered an error. Please try again.');
+    } finally {
+      this.isChatSending.set(false);
+      this.triggerUpdate();
+    }
+  }
+
   // --- App Flow ---
 
   enterApp() {
@@ -182,15 +209,23 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         
         // Migration logic for old saves (flat scenes -> groups)
         if (data.scenes && Array.isArray(data.scenes) && !data.sceneGroups) {
+          // Migration: Add IDs if missing
+          const migratedScenes = data.scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }));
+          
           const newGroup: SceneGroup = {
             id: crypto.randomUUID(),
             name: 'Sequence 01',
             isCollapsed: false,
-            scenes: data.scenes
+            scenes: migratedScenes
           };
           this.sceneGroups.set([newGroup]);
         } else if (data.sceneGroups) {
-          this.sceneGroups.set(data.sceneGroups);
+          // Ensure imported scenes have IDs
+          const groups = data.sceneGroups.map((g: any) => ({
+             ...g,
+             scenes: g.scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }))
+          }));
+          this.sceneGroups.set(groups);
         }
 
         if (data.aspectRatio) this.selectedAspectRatio.set(data.aspectRatio);
@@ -231,7 +266,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     };
     this.sceneGroups.update(groups => [...groups, newGroup]);
     this.triggerUpdate();
-    // Scroll to bottom logic could go here
   }
 
   deleteGroup(groupIndex: number) {
@@ -293,17 +327,23 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     const data = snapshot.data;
     this.scriptText.set(data.script);
     
-    // Handle migration for old snapshots as well
     if ((data as any).scenes && !(data as any).sceneGroups) {
-         const newGroup: SceneGroup = {
+          // Backward compatibility
+          const scenes = (data as any).scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }));
+          const newGroup: SceneGroup = {
             id: crypto.randomUUID(),
             name: 'Restored Sequence',
             isCollapsed: false,
-            scenes: (data as any).scenes
+            scenes
           };
           this.sceneGroups.set([newGroup]);
     } else {
-        this.sceneGroups.set(JSON.parse(JSON.stringify(data.sceneGroups))); 
+        // Restore groups with fresh IDs if missing (sanity check)
+        const groups = data.sceneGroups.map((g: any) => ({
+             ...g,
+             scenes: g.scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }))
+        }));
+        this.sceneGroups.set(groups);
     }
 
     this.selectedAspectRatio.set(data.aspectRatio);
@@ -335,7 +375,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   onDragOver(event: DragEvent, groupIndex: number, sceneIndex: number) {
     event.preventDefault(); 
     
-    // Only update signal if changed to prevent unnecessary checking
     if (this.dragOverGroupIndex() !== groupIndex || this.dragOverSceneIndex() !== sceneIndex) {
       this.dragOverGroupIndex.set(groupIndex);
       this.dragOverSceneIndex.set(sceneIndex);
@@ -377,13 +416,10 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   }
 
   private moveScene(fromGroupIdx: number, fromSceneIdx: number, toGroupIdx: number, toSceneIdx: number) {
-    const groups = JSON.parse(JSON.stringify(this.sceneGroups())); // Deep clone
+    const groups = JSON.parse(JSON.stringify(this.sceneGroups()));
     
-    // Remove from source
     const [movedScene] = groups[fromGroupIdx].scenes.splice(fromSceneIdx, 1);
     
-    // Insert into target
-    // Adjust index if moving within same group downwards
     let finalTargetIndex = toSceneIdx;
     
     groups[toGroupIdx].scenes.splice(finalTargetIndex, 0, movedScene);
@@ -407,6 +443,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     try {
       const result = await this.geminiService.analyzeScript(this.scriptText());
       const initialScenes = result.map((s: any) => ({ 
+        id: crypto.randomUUID(),
         ...s, 
         isGenerating: false, 
         isRegeneratingText: false, 
@@ -417,7 +454,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         progress: 0 
       }));
 
-      // Wrap in a default group
       const defaultGroup: SceneGroup = {
         id: crypto.randomUUID(),
         name: 'Sequence 01',
@@ -426,8 +462,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       };
       
       this.sceneGroups.set([defaultGroup]);
-      
-      // Automatically generate images
       this.generateAllImages();
       
     } catch (error) {
@@ -439,13 +473,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
-  async regenerateSceneText(groupIndex: number, sceneIndex: number) {
-    const group = this.sceneGroups()[groupIndex];
-    const scene = group.scenes[sceneIndex];
-    
-    if (scene.isRegeneratingText || !this.scriptText()) return;
+  async regenerateSceneText(sceneId: string) {
+    const { scene, groupIndex, sceneIndex } = this.findSceneById(sceneId);
+    if (!scene || scene.isRegeneratingText || !this.scriptText()) return;
 
-    this.updateSceneInGroup(groupIndex, sceneIndex, { 
+    this.updateScene(sceneId, { 
       isRegeneratingText: true, 
       errorMessage: undefined 
     });
@@ -454,7 +486,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       const result = await this.geminiService.regenerateScene(this.scriptText(), scene.sceneNumber);
       const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
 
-      this.updateSceneInGroup(groupIndex, sceneIndex, {
+      this.updateScene(sceneId, {
         description: result.description,
         visualPrompt: result.visualPrompt,
         imageUrl: undefined,
@@ -463,36 +495,34 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       });
     } catch (error) {
       console.error(error);
-      this.updateSceneInGroup(groupIndex, sceneIndex, { 
+      this.updateScene(sceneId, { 
         isRegeneratingText: false,
         errorMessage: 'Text generation failed. Please try again.'
       });
     }
   }
 
-  updateScenePrompt(groupIndex: number, sceneIndex: number, event: Event) {
-    const group = this.sceneGroups()[groupIndex];
-    const scene = group.scenes[sceneIndex];
+  updateScenePrompt(sceneId: string, event: Event) {
+    const { scene } = this.findSceneById(sceneId);
+    if (!scene) return;
     
     const newPrompt = (event.target as HTMLTextAreaElement).value;
     if (scene.visualPrompt === newPrompt) return;
 
     const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
     
-    this.updateSceneInGroup(groupIndex, sceneIndex, {
+    this.updateScene(sceneId, {
        visualPrompt: newPrompt,
        imageUrl: undefined, 
        promptHistory: [...(scene.promptHistory || []), historyItem]
     });
   }
 
-  async enhancePromptForScene(groupIndex: number, sceneIndex: number) {
-    const group = this.sceneGroups()[groupIndex];
-    const scene = group.scenes[sceneIndex];
+  async enhancePromptForScene(sceneId: string) {
+    const { scene } = this.findSceneById(sceneId);
+    if (!scene || scene.isEnhancingPrompt || scene.isGenerating) return;
 
-    if (scene.isEnhancingPrompt || scene.isGenerating) return;
-
-    this.updateSceneInGroup(groupIndex, sceneIndex, { 
+    this.updateScene(sceneId, { 
       isEnhancingPrompt: true,
       errorMessage: undefined 
     });
@@ -502,32 +532,30 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       
       if (enhancedPrompt !== scene.visualPrompt) {
          const historyItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
-         this.updateSceneInGroup(groupIndex, sceneIndex, {
+         this.updateScene(sceneId, {
            visualPrompt: enhancedPrompt,
            isEnhancingPrompt: false,
            promptHistory: [...(scene.promptHistory || []), historyItem]
          });
          this.showNotification('Prompt enhanced');
       } else {
-         this.updateSceneInGroup(groupIndex, sceneIndex, { isEnhancingPrompt: false });
+         this.updateScene(sceneId, { isEnhancingPrompt: false });
          this.showNotification('Prompt is already optimized');
       }
     } catch (error) {
       console.error(error);
-      this.updateSceneInGroup(groupIndex, sceneIndex, { 
+      this.updateScene(sceneId, { 
         isEnhancingPrompt: false,
         errorMessage: 'Prompt enhancement failed.'
       });
     }
   }
 
-  async generateImageForScene(groupIndex: number, sceneIndex: number) {
-    const group = this.sceneGroups()[groupIndex];
-    const scene = group.scenes[sceneIndex];
-    
-    if (scene.isGenerating) return;
+  async generateImageForScene(sceneId: string) {
+    const { scene } = this.findSceneById(sceneId);
+    if (!scene || scene.isGenerating) return;
 
-    this.updateSceneInGroup(groupIndex, sceneIndex, { 
+    this.updateScene(sceneId, { 
       isGenerating: true, 
       statusMessage: 'Enhancing prompt...',
       progress: 10,
@@ -537,7 +565,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     try {
       const enhancedPrompt = await this.geminiService.enhancePrompt(scene.visualPrompt);
       
-      this.updateSceneInGroup(groupIndex, sceneIndex, {
+      this.updateScene(sceneId, {
         progress: 40,
         statusMessage: 'Preparing render...'
       });
@@ -548,7 +576,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
          historyUpdate = { promptHistory: [...(scene.promptHistory || []), historyItem] };
       }
       
-      this.updateSceneInGroup(groupIndex, sceneIndex, { 
+      this.updateScene(sceneId, { 
         visualPrompt: enhancedPrompt,
         statusMessage: 'Rendering image...',
         progress: 60,
@@ -558,7 +586,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       const finalPrompt = `${enhancedPrompt}, ${this.selectedResolution()} resolution`;
       const imageUrl = await this.geminiService.generateImage(finalPrompt, this.selectedAspectRatio());
       
-      this.updateSceneInGroup(groupIndex, sceneIndex, { 
+      this.updateScene(sceneId, { 
         imageUrl, 
         isGenerating: false,
         statusMessage: undefined,
@@ -572,7 +600,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       else if (error.message?.includes('safety')) friendlyError = 'Blocked by safety settings.';
       else friendlyError = 'Connection interrupted.';
 
-      this.updateSceneInGroup(groupIndex, sceneIndex, { 
+      this.updateScene(sceneId, { 
         isGenerating: false,
         statusMessage: 'Failed',
         errorMessage: friendlyError,
@@ -583,26 +611,24 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
 
   async generateAllImages() {
     const groups = this.sceneGroups();
-    for (let g = 0; g < groups.length; g++) {
-      for (let s = 0; s < groups[g].scenes.length; s++) {
-        const scene = groups[g].scenes[s];
+    for (const group of groups) {
+      for (const scene of group.scenes) {
         if (!scene.imageUrl && !scene.isGenerating) {
-          await this.generateImageForScene(g, s);
+          // Pass ID instead of indices
+          await this.generateImageForScene(scene.id);
         }
       }
     }
   }
 
-  revertToPreviousVersion(groupIndex: number, sceneIndex: number) {
-    const group = this.sceneGroups()[groupIndex];
-    const scene = group.scenes[sceneIndex];
-    
-    if (!scene.promptHistory || scene.promptHistory.length === 0) return;
+  revertToPreviousVersion(sceneId: string) {
+    const { scene } = this.findSceneById(sceneId);
+    if (!scene || !scene.promptHistory || scene.promptHistory.length === 0) return;
     
     const previous = scene.promptHistory[scene.promptHistory.length - 1];
     const newHistory = scene.promptHistory.slice(0, -1);
     
-    this.updateSceneInGroup(groupIndex, sceneIndex, {
+    this.updateScene(sceneId, {
       visualPrompt: previous.prompt,
       imageUrl: previous.imageUrl,
       promptHistory: newHistory,
@@ -612,67 +638,41 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     });
   }
 
-  private updateSceneInGroup(groupIndex: number, sceneIndex: number, updates: Partial<Scene>) {
+  // --- Helpers ---
+
+  // Update scene by ID (Cross-Group robust)
+  private updateScene(sceneId: string, updates: Partial<Scene>) {
     this.sceneGroups.update(groups => {
+      // Create shallow copy of groups array
       const newGroups = [...groups];
-      const newScenes = [...newGroups[groupIndex].scenes];
-      newScenes[sceneIndex] = { ...newScenes[sceneIndex], ...updates };
-      newGroups[groupIndex] = { ...newGroups[groupIndex], scenes: newScenes };
+      
+      for (let g = 0; g < newGroups.length; g++) {
+        const group = newGroups[g];
+        const sceneIndex = group.scenes.findIndex(s => s.id === sceneId);
+        
+        if (sceneIndex !== -1) {
+           // Found it. Clone scenes array
+           const newScenes = [...group.scenes];
+           newScenes[sceneIndex] = { ...newScenes[sceneIndex], ...updates };
+           newGroups[g] = { ...group, scenes: newScenes };
+           break; // Stop once found
+        }
+      }
       return newGroups;
     });
     this.triggerUpdate();
   }
 
-  // --- Chat Logic ---
-
-  toggleChat() {
-    this.isChatOpen.update(v => !v);
-    this.triggerUpdate();
-  }
-
-  async sendChatMessage() {
-    const text = this.chatInput().trim();
-    if (!text || this.isChatSending()) return;
-
-    this.chatMessages.update(msgs => [...msgs, { role: 'user', text }]);
-    this.chatInput.set('');
-    this.isChatSending.set(true);
-    this.triggerUpdate();
-    this.scrollToBottom();
-
-    try {
-      if (!this.chatSession) {
-        this.chatSession = this.geminiService.getChatModel();
+  private findSceneById(id: string): { scene: Scene | undefined, groupIndex: number, sceneIndex: number } {
+    const groups = this.sceneGroups();
+    for (let g = 0; g < groups.length; g++) {
+      const idx = groups[g].scenes.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        return { scene: groups[g].scenes[idx], groupIndex: g, sceneIndex: idx };
       }
-
-      const response: GenerateContentResponse = await this.chatSession.sendMessage({ message: text });
-      this.addBotMessage(response.text);
-
-    } catch (error) {
-      console.error(error);
-      this.addBotMessage("Sorry, I encountered an error. Please try again.");
-    } finally {
-      this.isChatSending.set(false);
-      this.triggerUpdate();
-      this.scrollToBottom();
     }
+    return { scene: undefined, groupIndex: -1, sceneIndex: -1 };
   }
-
-  private addBotMessage(text: string) {
-    this.chatMessages.update(msgs => [...msgs, { role: 'model', text }]);
-    this.triggerUpdate();
-    this.scrollToBottom();
-  }
-
-  private scrollToBottom() {
-    setTimeout(() => {
-      if (this.scrollContainer) {
-        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-      }
-    }, 100);
-  }
-
-  // --- Helpers ---
 
   onScriptInput(event: Event) {
     const val = (event.target as HTMLTextAreaElement).value;

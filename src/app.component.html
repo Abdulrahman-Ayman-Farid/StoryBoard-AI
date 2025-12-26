@@ -331,7 +331,7 @@
                 <div class="relative mb-8">
                     <div class="absolute inset-0 bg-indigo-500/30 blur-[60px] rounded-full animate-pulse"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="relative h-28 w-28 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 <p class="text-white/50 text-lg font-light tracking-widest uppercase">Awaiting Script</p>
@@ -383,7 +383,7 @@
                         <!-- Scenes Grid -->
                         @if (!group.isCollapsed) {
                             <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 pl-4 border-l border-white/5 ml-3">
-                            @for (scene of group.scenes; track scene.sceneNumber; let sceneIndex = $index) {
+                            @for (scene of group.scenes; track scene.id; let sceneIndex = $index) {
                                 <!-- Ultra Glass Card Draggable -->
                                 <div 
                                     draggable="true"
@@ -425,7 +425,7 @@
                                     <!-- Floating Controls -->
                                     <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 translate-y-[-10px] group-hover:translate-y-0">
                                         <!-- Regenerate Image Button -->
-                                        <button (click)="generateImageForScene(groupIndex, sceneIndex)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="p-3 rounded-full bg-black/40 backdrop-blur-xl text-white hover:bg-indigo-600 border border-white/10 transition-colors disabled:opacity-50 shadow-lg">
+                                        <button (click)="generateImageForScene(scene.id)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="p-3 rounded-full bg-black/40 backdrop-blur-xl text-white hover:bg-indigo-600 border border-white/10 transition-colors disabled:opacity-50 shadow-lg">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
@@ -469,12 +469,12 @@
                                             </div>
                                             <p class="text-red-200 font-medium text-sm mb-1">Interrupted</p>
                                             <p class="text-red-200/60 text-xs mb-4 max-w-[200px]">{{ scene.errorMessage }}</p>
-                                            <button (click)="generateImageForScene(groupIndex, sceneIndex)" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-colors">
+                                            <button (click)="generateImageForScene(scene.id)" class="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-colors">
                                                 Retry
                                             </button>
                                             </div>
                                         } @else {
-                                            <button (click)="generateImageForScene(groupIndex, sceneIndex)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed group/btn">
+                                            <button (click)="generateImageForScene(scene.id)" [disabled]="scene.isGenerating || scene.isEnhancingPrompt" class="px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-white/80 hover:text-white text-sm font-medium transition-all backdrop-blur-sm shadow-[0_0_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed group/btn">
                                             <span class="group-hover/btn:scale-105 inline-block transition-transform">Generate Frame</span>
                                             </button>
                                         }
@@ -501,7 +501,7 @@
                                     <!-- Action Bar for Text -->
                                     <div class="flex justify-between items-start mb-4">
                                         <p class="text-gray-400 font-light text-sm leading-relaxed flex-grow mr-4 select-text line-clamp-4 hover:line-clamp-none transition-all duration-300">{{ scene.description }}</p>
-                                        <button (click)="regenerateSceneText(groupIndex, sceneIndex)" [disabled]="scene.isRegeneratingText" class="text-white/20 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-white/5 disabled:opacity-50 flex-shrink-0">
+                                        <button (click)="regenerateSceneText(scene.id)" [disabled]="scene.isRegeneratingText" class="text-white/20 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-white/5 disabled:opacity-50 flex-shrink-0">
                                             @if (scene.isRegeneratingText) {
                                             <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -521,7 +521,7 @@
                                     } @else if (scene.errorMessage) {
                                     <div class="mb-4 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-2">
                                         <span class="text-xs text-red-300">{{ scene.errorMessage }}</span>
-                                        <button (click)="scene.errorMessage?.includes('Prompt') ? enhancePromptForScene(groupIndex, sceneIndex) : regenerateSceneText(groupIndex, sceneIndex)" class="text-xs text-red-200 hover:text-white underline decoration-red-500/50">Retry</button>
+                                        <button (click)="scene.errorMessage?.includes('Prompt') ? enhancePromptForScene(scene.id) : regenerateSceneText(scene.id)" class="text-xs text-red-200 hover:text-white underline decoration-red-500/50">Retry</button>
                                     </div>
                                     }
 
@@ -536,7 +536,7 @@
                                                 Visual Prompt v{{ (scene.promptHistory?.length || 0) + 1 }}
                                             </span>
                                             <!-- Enhance Button -->
-                                            <button (click)="enhancePromptForScene(groupIndex, sceneIndex)" 
+                                            <button (click)="enhancePromptForScene(scene.id)" 
                                                     [disabled]="scene.isEnhancingPrompt || scene.isGenerating"
                                                     class="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-[10px] font-medium text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed group/enhance">
                                                     @if (scene.isEnhancingPrompt) {
@@ -554,7 +554,7 @@
                                         </div>
 
                                         @if (scene.promptHistory && scene.promptHistory.length > 0) {
-                                            <button (click)="revertToPreviousVersion(groupIndex, sceneIndex)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 group/revert">
+                                            <button (click)="revertToPreviousVersion(scene.id)" class="text-[10px] text-white/40 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-0.5 rounded hover:bg-white/10 group/revert">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 group-hover/revert:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                                 </svg>
@@ -569,7 +569,7 @@
                                         } @else {
                                             <textarea
                                                 [value]="scene.visualPrompt"
-                                                (change)="updateScenePrompt(groupIndex, sceneIndex, $event)"
+                                                (change)="updateScenePrompt(scene.id, $event)"
                                                 class="w-full bg-transparent text-white/60 text-xs italic font-serif tracking-wide border-none outline-none resize-none placeholder-white/20 hover:text-white/80 transition-colors focus:bg-white/5 rounded p-2 -ml-2"
                                                 rows="3"
                                             ></textarea>
