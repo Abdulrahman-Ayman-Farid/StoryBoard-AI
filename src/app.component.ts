@@ -114,9 +114,20 @@ export class AppComponent {
     this.addBotMessage("Hello! I'm your Storyboard Assistant. How can I help you with your script today?");
   }
 
+  // --- Chat Logic ---
+
+  toggleChat() {
+    this.isChatOpen.update(v => !v);
+    this.triggerUpdate();
+    if (this.isChatOpen()) {
+      this.scrollToBottom();
+    }
+  }
+
   private addBotMessage(text: string) {
     this.chatMessages.update(msgs => [...msgs, { role: 'model', text }]);
     this.triggerUpdate();
+    this.scrollToBottom();
   }
 
   async sendChatMessage() {
@@ -127,6 +138,7 @@ export class AppComponent {
     this.chatMessages.update(msgs => [...msgs, { role: 'user', text }]);
     this.chatInput.set('');
     this.triggerUpdate();
+    this.scrollToBottom();
 
     try {
       const response = await this.chatSession.sendMessage({ message: text });
@@ -137,7 +149,16 @@ export class AppComponent {
     } finally {
       this.isChatSending.set(false);
       this.triggerUpdate();
+      this.scrollToBottom();
     }
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      if (this.scrollContainer) {
+        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+      }
+    }, 100);
   }
 
   // --- App Flow ---
@@ -443,28 +464,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         groups[toGroupIdx].scenes.push(movedScene);
     } else {
         // Calculate insertion index
-        // If moving within same group and we are moving down (from < to),
-        // we essentially want to place it *after* the item that was at toSceneIdx *before* splice.
-        // Because of the splice (removal), indices shift down. 
-        // Example: [A, B, C]. Move A(0) to drop on C(2).
-        // Remove A -> [B, C]. C is now at index 1.
-        // We want result [B, C, A] (Insert After C). 
-        // toSceneIdx was 2. Splice at 2 in [B, C] -> [B, C, A]. Correct.
-        
-        // Example: [A, B, C]. Move C(2) to drop on A(0).
-        // Remove C -> [A, B].
-        // We want result [C, A, B] (Insert Before A).
-        // toSceneIdx was 0. Splice at 0 in [A, B] -> [C, A, B]. Correct.
-
-        // Standard "Insert Before Target" logic implies:
-        // When I drag A onto B, I want A to be before B.
-        // [A, B, C]. Drag A(0) onto B(1).
-        // Remove A -> [B, C].
-        // toSceneIdx=1. Splice at 1 -> [B, A, C]. Wait, this is "After".
-        // To strictly "Insert Before", if I target B(1) and remove A(0), 
-        // B shifts to 0. So I should insert at 0.
-        // So if fromGroup == toGroup and fromIdx < toIdx, we must decrement target index.
-        
         let targetIndex = toSceneIdx;
         if (fromGroupIdx === toGroupIdx && fromSceneIdx < toSceneIdx) {
             targetIndex--;
