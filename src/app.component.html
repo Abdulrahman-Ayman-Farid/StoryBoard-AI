@@ -97,7 +97,7 @@
                 <div class="absolute -inset-2 bg-indigo-500/40 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition duration-1000"></div>
                 <div class="relative bg-white/[0.05] border border-white/10 p-2.5 rounded-xl backdrop-blur-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 </div>
@@ -433,12 +433,11 @@
                                     (drop)="onDrop($event, groupIndex, sceneIndex)"
                                     (dragend)="onDragEnd($event)"
                                     [class.opacity-50]="draggedGroupIndex() === groupIndex && draggedSceneIndex() === sceneIndex"
-                                    [class.scale-[0.98]]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex"
                                     class="group/card relative transition-all duration-500 cursor-default">
                                     
                                     <!-- Visual Insertion Marker -->
                                     @if (dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex) {
-                                        <div class="absolute inset-y-4 -left-3 w-1.5 bg-indigo-500 rounded-full shadow-[0_0_15px_#6366f1] z-30 animate-pulse"></div>
+                                        <div class="absolute inset-y-4 -left-4 w-1.5 bg-indigo-400 rounded-full shadow-[0_0_20px_#818cf8] z-30 animate-pulse"></div>
                                     }
 
                                     <!-- Connector Arrows (Visual Flow) -->
@@ -461,8 +460,11 @@
                                     }
 
                                     <!-- The Actual Visual Card -->
-                                    <div class="relative bg-white/[0.02] backdrop-blur-[20px] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:bg-white/[0.04] group-hover/card:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                                         [class.border-indigo-500]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex">
+                                    <div class="relative bg-white/[0.02] backdrop-blur-[20px] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-white/10 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:bg-white/[0.04] group-hover/card:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                                         [class.border-indigo-400]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex"
+                                         [class.bg-indigo-600/10]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex"
+                                         [class.shadow-[0_0_40px_rgba(99,102,241,0.4)]]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex"
+                                         [class.scale-[1.02]]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex">
                                         
                                         <!-- Drag Overlay in Card -->
                                         @if (dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex) {
