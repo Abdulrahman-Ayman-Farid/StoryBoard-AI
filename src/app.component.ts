@@ -16,6 +16,7 @@ interface Scene {
   errorMessage?: string; 
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
   progress?: number;
+  notes?: string;
 }
 
 interface SceneGroup {
@@ -744,6 +745,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       errorMessage: undefined,
       progress: 0
     });
+  }
+
+  updateSceneNotes(sceneId: string, event: Event) {
+    const val = (event.target as HTMLTextAreaElement).value;
+    this.updateScene(sceneId, { notes: val });
   }
 
   // --- Helpers ---
