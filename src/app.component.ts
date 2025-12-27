@@ -3,6 +3,7 @@ import { GeminiService } from './services/gemini.service';
 import { Chat, GenerateContentResponse } from '@google/genai';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
+// ... interfaces ... (same as existing)
 interface Scene {
   id: string; // Unique identifier for stable lookups
   sceneNumber: number;
@@ -31,7 +32,6 @@ interface ChatMessage {
   text: string;
 }
 
-// Data shape for a single version
 interface ProjectData {
   script: string;
   sceneGroups: SceneGroup[];
@@ -81,7 +81,7 @@ export class AppComponent {
   // Image Config
   selectedAspectRatio = signal<string>('16:9');
   selectedResolution = signal<string>('2K'); // 1K, 2K, 4K
-  selectedGroupingStrategy = signal<string>('single'); // single, smart, batch_3, batch_5, batch_10
+  selectedGroupingStrategy = signal<string>('single'); // single, smart, lines_50, batch_3, batch_5, batch_10
 
   // Computed Style for Aspect Ratio
   aspectRatioStyle = computed(() => {
@@ -315,10 +315,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         
         for (const scene of group.scenes) {
              // Scene Layout
-             // We'll put image on left (if exists) and text on right.
-             // Or top/bottom if description is long. Let's do Left/Right for standard storyboard feel.
-             
-             // Image setup
              const imgWidth = 80;
              const imgHeight = 45; // Approx 16:9
              
@@ -734,6 +730,56 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                 isCollapsed: false,
                 scenes: allScenes
               }];
+          } else if (strategy === 'lines_50') {
+             // Heuristic: Identify scene boundaries in the source text to estimate line numbers.
+             // This assumes the Gemini model returned scenes in the same order as the text.
+             const lines = this.scriptText().split('\n');
+             const sceneStartLines: number[] = [];
+             const regex = /^(INT\.|EXT\.|INT\/EXT|I\/E|EST\.)/i;
+             
+             lines.forEach((line, idx) => {
+                if (regex.test(line.trim())) {
+                    sceneStartLines.push(idx + 1);
+                }
+             });
+             
+             // If detection fails significantly (e.g. no sluglines), fallback to batch 5
+             if (sceneStartLines.length === 0) {
+                 const size = 5;
+                 for (let i = 0; i < allScenes.length; i += size) {
+                     newGroups.push({
+                         id: crypto.randomUUID(),
+                         name: `Sequence ${newGroups.length + 1}`,
+                         isCollapsed: false,
+                         scenes: allScenes.slice(i, i + size)
+                     });
+                 }
+             } else {
+                 let currentGroup: SceneGroup | null = null;
+                 let lastPageIdx = -1;
+                 
+                 allScenes.forEach((scene, i) => {
+                     // Best effort mapping: Scene i corresponds to i-th detected header
+                     // If we have more scenes than headers (Gemini split a scene), use the last header line
+                     // If we have fewer, it's fine.
+                     const lineNum = i < sceneStartLines.length ? sceneStartLines[i] : (sceneStartLines[sceneStartLines.length-1] || 0) + 10;
+                     
+                     // 50 lines approx per page
+                     const pageIdx = Math.floor(lineNum / 50); 
+                     
+                     if (pageIdx !== lastPageIdx || !currentGroup) {
+                         lastPageIdx = pageIdx;
+                         currentGroup = {
+                             id: crypto.randomUUID(),
+                             name: `Page ${pageIdx + 1} (Approx)`,
+                             isCollapsed: false,
+                             scenes: []
+                         };
+                         newGroups.push(currentGroup);
+                     }
+                     currentGroup.scenes.push(scene);
+                 });
+             }
           } else if (strategy.startsWith('batch_')) {
               const size = parseInt(strategy.split('_')[1], 10) || 5;
               for (let i = 0; i < allScenes.length; i += size) {

@@ -97,7 +97,7 @@
                 <div class="absolute -inset-2 bg-indigo-500/40 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition duration-1000"></div>
                 <div class="relative bg-white/[0.05] border border-white/10 p-2.5 rounded-xl backdrop-blur-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 </div>
@@ -271,6 +271,7 @@
                         class="w-full bg-black/40 border border-white/10 text-white text-sm rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 block p-3.5 transition-all outline-none appearance-none hover:bg-black/50 cursor-pointer">
                         <option value="single" class="bg-gray-900">Single Sequence</option>
                         <option value="smart" class="bg-gray-900">Auto-Group by Narrative (Smart)</option>
+                        <option value="lines_50" class="bg-gray-900">Batch: Every 50 Lines (~1 Page)</option>
                         <option value="batch_3" class="bg-gray-900">Batch: Every 3 Scenes</option>
                         <option value="batch_5" class="bg-gray-900">Batch: Every 5 Scenes</option>
                         <option value="batch_10" class="bg-gray-900">Batch: Every 10 Scenes</option>
@@ -358,7 +359,7 @@
                 <div class="relative mb-8">
                     <div class="absolute inset-0 bg-indigo-500/30 blur-[60px] rounded-full animate-pulse"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="relative h-28 w-28 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                     </svg>
                 </div>
                 <p class="text-white/50 text-lg font-light tracking-widest uppercase">Awaiting Script</p>
@@ -483,7 +484,7 @@
                                             [style.aspect-ratio]="aspectRatioStyle()">
                                             
                                             @if (scene.imageUrl) {
-                                            <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110 select-none" alt="Scene {{ scene.sceneNumber }}">
+                                            <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110 select-none" draggable="false" alt="Scene {{ scene.sceneNumber }}">
                                             
                                             <!-- Overlay for Regeneration Status -->
                                             @if (scene.isGenerating) {
