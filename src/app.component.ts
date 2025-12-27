@@ -269,6 +269,145 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
+  exportToPDF() {
+    const jspdf = (window as any).jspdf;
+    if (!jspdf) {
+        this.showNotification('PDF Library not loaded. Please refresh.');
+        return;
+    }
+
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF();
+    
+    let y = 20;
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const contentWidth = pageWidth - (margin * 2);
+    const maxPageHeight = doc.internal.pageSize.getHeight();
+    
+    // Title
+    doc.setFontSize(24);
+    doc.text("Storyboard Export", margin, y);
+    y += 10;
+    
+    // Script Info
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y);
+    doc.text(`Total Scenes: ${this.totalSceneCount()}`, margin + 60, y);
+    y += 15;
+    
+    doc.setTextColor(0);
+
+    for (const group of this.sceneGroups()) {
+        // Group Header
+        if (y > maxPageHeight - 30) { doc.addPage(); y = 20; }
+        
+        // Horizontal Line
+        doc.setDrawColor(200);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 10;
+
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(group.name, margin, y);
+        y += 15;
+        
+        for (const scene of group.scenes) {
+             // Scene Layout
+             // We'll put image on left (if exists) and text on right.
+             // Or top/bottom if description is long. Let's do Left/Right for standard storyboard feel.
+             
+             // Image setup
+             const imgWidth = 80;
+             const imgHeight = 45; // Approx 16:9
+             
+             // Text setup
+             const textX = margin + imgWidth + 10;
+             const textWidth = contentWidth - imgWidth - 10;
+             
+             doc.setFontSize(10);
+             doc.setFont("helvetica", "normal");
+             const descLines = doc.splitTextToSize(scene.description, textWidth);
+             
+             doc.setFontSize(8);
+             doc.setFont("helvetica", "italic");
+             const promptLines = doc.splitTextToSize("Prompt: " + scene.visualPrompt, textWidth);
+             
+             doc.setFontSize(10);
+             doc.setFont("helvetica", "normal");
+             const notesLines = scene.notes ? doc.splitTextToSize("Notes: " + scene.notes, textWidth) : [];
+             
+             // Calculate needed height for text block
+             const textBlockHeight = (descLines.length * 5) + (promptLines.length * 4) + (notesLines.length * 5) + 20;
+             const neededHeight = Math.max(imgHeight, textBlockHeight) + 15;
+             
+             // Check Pagination
+             if (y + neededHeight > maxPageHeight - 20) {
+                 doc.addPage();
+                 y = 20;
+             }
+             
+             // Draw Scene Header
+             doc.setFontSize(12);
+             doc.setFont("helvetica", "bold");
+             doc.text(`Scene ${scene.sceneNumber}`, margin, y + 5);
+             
+             // Draw Image
+             if (scene.imageUrl) {
+                 try {
+                     doc.addImage(scene.imageUrl, 'JPEG', margin, y + 10, imgWidth, imgHeight);
+                 } catch (e) {
+                     console.warn('Could not add image for scene ' + scene.sceneNumber, e);
+                     doc.rect(margin, y + 10, imgWidth, imgHeight); // Fallback rect
+                 }
+             } else {
+                 // Placeholder rect
+                 doc.setDrawColor(200);
+                 doc.setFillColor(245);
+                 doc.rect(margin, y + 10, imgWidth, imgHeight, 'FD');
+                 doc.setFontSize(8);
+                 doc.setTextColor(150);
+                 doc.text("No Image Rendered", margin + 25, y + 30);
+                 doc.setTextColor(0);
+             }
+             
+             // Draw Texts
+             let textY = y + 10; // Align with top of image
+             
+             // Description
+             doc.setFont("helvetica", "normal");
+             doc.setFontSize(10);
+             doc.text(descLines, textX, textY);
+             textY += (descLines.length * 5) + 5;
+             
+             // Prompt
+             doc.setFont("helvetica", "italic");
+             doc.setFontSize(8);
+             doc.setTextColor(80);
+             doc.text(promptLines, textX, textY);
+             textY += (promptLines.length * 4) + 5;
+             doc.setTextColor(0);
+             
+             // Notes
+             if (scene.notes) {
+                 doc.setFont("helvetica", "bold");
+                 doc.setFontSize(9);
+                 doc.text("Director's Notes:", textX, textY);
+                 textY += 4;
+                 doc.setFont("helvetica", "normal");
+                 doc.text(notesLines, textX, textY);
+             }
+             
+             y += neededHeight;
+        }
+        y += 10; // Extra space between groups
+    }
+    
+    doc.save("storyboard-export.pdf");
+    this.showNotification('PDF Exported Successfully');
+  }
+
   showNotification(message: string) {
     this.notification.set(message);
     this.triggerUpdate();
