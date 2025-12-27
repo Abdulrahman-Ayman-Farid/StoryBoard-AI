@@ -81,6 +81,7 @@ export class AppComponent {
   // Image Config
   selectedAspectRatio = signal<string>('16:9');
   selectedResolution = signal<string>('2K'); // 1K, 2K, 4K
+  selectedGroupingStrategy = signal<string>('single'); // single, smart, batch_3, batch_5, batch_10
 
   // Computed Style for Aspect Ratio
   aspectRatioStyle = computed(() => {
@@ -550,10 +551,12 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     this.triggerUpdate();
 
     try {
-      const result = await this.geminiService.analyzeScript(this.scriptText());
-      const initialScenes = result.map((s: any) => ({ 
-        id: crypto.randomUUID(),
-        ...s, 
+      const strategy = this.selectedGroupingStrategy();
+      const useSmart = strategy === 'smart';
+      
+      const result = await this.geminiService.analyzeScript(this.scriptText(), useSmart);
+      
+      const defaults = {
         isGenerating: false, 
         isRegeneratingText: false, 
         isEnhancingPrompt: false,
@@ -561,16 +564,52 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         errorMessage: undefined,
         promptHistory: [],
         progress: 0 
-      }));
-
-      const defaultGroup: SceneGroup = {
-        id: crypto.randomUUID(),
-        name: 'Sequence 01',
-        isCollapsed: false,
-        scenes: initialScenes
       };
+
+      let newGroups: SceneGroup[] = [];
+
+      if (useSmart) {
+          // result is array of { name, scenes }
+          newGroups = result.map((g: any) => ({
+            id: crypto.randomUUID(),
+            name: g.name || 'Untitled Sequence',
+            isCollapsed: false,
+            scenes: (g.scenes || []).map((s: any) => ({
+                id: crypto.randomUUID(),
+                ...s,
+                ...defaults
+            }))
+          }));
+      } else {
+          // result is flat array of scenes
+          const allScenes = result.map((s: any) => ({ 
+            id: crypto.randomUUID(),
+            ...s, 
+            ...defaults
+          }));
+
+          if (strategy === 'single' || allScenes.length === 0) {
+              newGroups = [{
+                id: crypto.randomUUID(),
+                name: 'Sequence 01',
+                isCollapsed: false,
+                scenes: allScenes
+              }];
+          } else if (strategy.startsWith('batch_')) {
+              const size = parseInt(strategy.split('_')[1], 10) || 5;
+              for (let i = 0; i < allScenes.length; i += size) {
+                  const chunk = allScenes.slice(i, i + size);
+                  newGroups.push({
+                      id: crypto.randomUUID(),
+                      name: `Sequence ${newGroups.length + 1}`,
+                      isCollapsed: false,
+                      scenes: chunk
+                  });
+              }
+          }
+      }
       
-      this.sceneGroups.set([defaultGroup]);
+      this.sceneGroups.set(newGroups);
       this.generateAllImages();
       
     } catch (error) {
@@ -803,6 +842,12 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   onAspectRatioChange(event: Event) {
     const val = (event.target as HTMLSelectElement).value;
     this.selectedAspectRatio.set(val);
+    this.triggerUpdate();
+  }
+
+  onGroupingStrategyChange(event: Event) {
+    const val = (event.target as HTMLSelectElement).value;
+    this.selectedGroupingStrategy.set(val);
     this.triggerUpdate();
   }
   
