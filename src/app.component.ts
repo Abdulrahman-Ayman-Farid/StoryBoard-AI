@@ -3,7 +3,6 @@ import { GeminiService } from './services/gemini.service';
 import { Chat, GenerateContentResponse } from '@google/genai';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
-// ... interfaces ... (same as existing)
 interface Scene {
   id: string; // Unique identifier for stable lookups
   sceneNumber: number;
@@ -18,6 +17,11 @@ interface Scene {
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
   progress?: number;
   notes?: string;
+  // Store original state for reset capability
+  initialState?: {
+    description: string;
+    visualPrompt: string;
+  };
 }
 
 interface SceneGroup {
@@ -233,7 +237,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         // Migration logic for old saves (flat scenes -> groups)
         if (data.scenes && Array.isArray(data.scenes) && !data.sceneGroups) {
           // Migration: Add IDs if missing
-          const migratedScenes = data.scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }));
+          const migratedScenes = data.scenes.map((s: any) => ({ 
+             ...s, 
+             id: s.id || crypto.randomUUID(),
+             initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
+          }));
           
           const newGroup: SceneGroup = {
             id: crypto.randomUUID(),
@@ -243,10 +251,14 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
           };
           this.sceneGroups.set([newGroup]);
         } else if (data.sceneGroups) {
-          // Ensure imported scenes have IDs
+          // Ensure imported scenes have IDs and initialState
           const groups = data.sceneGroups.map((g: any) => ({
              ...g,
-             scenes: g.scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }))
+             scenes: g.scenes.map((s: any) => ({ 
+                 ...s, 
+                 id: s.id || crypto.randomUUID(),
+                 initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
+             }))
           }));
           this.sceneGroups.set(groups);
         }
@@ -547,7 +559,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     
     if ((data as any).scenes && !(data as any).sceneGroups) {
           // Backward compatibility
-          const scenes = (data as any).scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }));
+          const scenes = (data as any).scenes.map((s: any) => ({ 
+              ...s, 
+              id: s.id || crypto.randomUUID(),
+              initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
+          }));
           const newGroup: SceneGroup = {
             id: crypto.randomUUID(),
             name: 'Restored Sequence',
@@ -559,7 +575,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         // Restore groups with fresh IDs if missing (sanity check)
         const groups = data.sceneGroups.map((g: any) => ({
              ...g,
-             scenes: g.scenes.map((s: any) => ({ ...s, id: s.id || crypto.randomUUID() }))
+             scenes: g.scenes.map((s: any) => ({ 
+                 ...s, 
+                 id: s.id || crypto.randomUUID(),
+                 initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
+             }))
         }));
         this.sceneGroups.set(groups);
     }
@@ -712,6 +732,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
             scenes: (g.scenes || []).map((s: any) => ({
                 id: crypto.randomUUID(),
                 ...s,
+                initialState: { description: s.description, visualPrompt: s.visualPrompt },
                 ...defaults
             }))
           }));
@@ -720,6 +741,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
           const allScenes = result.map((s: any) => ({ 
             id: crypto.randomUUID(),
             ...s, 
+            initialState: { description: s.description, visualPrompt: s.visualPrompt },
             ...defaults
           }));
 
@@ -804,6 +826,25 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       this.isAnalyzing.set(false);
       this.triggerUpdate();
     }
+  }
+
+  resetScene(sceneId: string) {
+    const { scene } = this.findSceneById(sceneId);
+    if (!scene || !scene.initialState) return;
+    
+    if (!confirm('Reset this scene to its original state? This will remove the current image and discard all text edits.')) return;
+
+    this.updateScene(sceneId, {
+        description: scene.initialState.description,
+        visualPrompt: scene.initialState.visualPrompt,
+        imageUrl: undefined,
+        promptHistory: [],
+        notes: '',
+        statusMessage: undefined,
+        errorMessage: undefined,
+        progress: 0
+    });
+    this.showNotification('Scene reset');
   }
 
   async regenerateSceneText(sceneId: string) {
