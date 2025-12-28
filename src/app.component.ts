@@ -395,21 +395,37 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
              const textX = margin + imgWidth + 10;
              const textWidth = contentWidth - imgWidth - 10;
              
+             // Pre-calculate lines to determine height
              doc.setFontSize(10);
              doc.setFont("helvetica", "normal");
              const descLines = doc.splitTextToSize(scene.description || '', textWidth);
              
              doc.setFontSize(8);
              doc.setFont("helvetica", "italic");
-             const promptLines = doc.splitTextToSize("Prompt: " + (scene.visualPrompt || ''), textWidth);
+             const promptLines = doc.splitTextToSize(scene.visualPrompt || '', textWidth);
              
              doc.setFontSize(10);
              doc.setFont("helvetica", "normal");
-             const notesLines = scene.notes ? doc.splitTextToSize("Notes: " + scene.notes, textWidth) : [];
+             const notesLines = scene.notes ? doc.splitTextToSize(scene.notes, textWidth) : [];
              
              // Calculate needed height for text block
-             const textBlockHeight = (descLines.length * 5) + (promptLines.length * 4) + (notesLines.length * 5) + 20;
-             const neededHeight = Math.max(imgHeight, textBlockHeight) + 15;
+             // Layout:
+             // Action Label (5)
+             // Action Text (lines * 5)
+             // Spacer (5)
+             // Prompt Label (4)
+             // Prompt Text (lines * 4)
+             // Spacer (5)
+             // [Notes Label (5) + Text (lines * 5)]
+             
+             let textBlockHeight = 0;
+             textBlockHeight += 5 + (descLines.length * 5) + 5; // Action section
+             textBlockHeight += 4 + (promptLines.length * 4) + 5; // Prompt section
+             if (notesLines.length > 0) {
+                 textBlockHeight += 5 + (notesLines.length * 5); // Notes section
+             }
+             
+             const neededHeight = Math.max(imgHeight, textBlockHeight) + 15; // +15 padding bottom
              
              // Check Pagination
              if (y + neededHeight > maxPageHeight - 20) {
@@ -417,9 +433,10 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                  y = 20;
              }
              
-             // Draw Scene Header
+             // Draw Scene Header (Scene Number)
              doc.setFontSize(12);
              doc.setFont("helvetica", "bold");
+             doc.setTextColor(0);
              doc.text(`Scene ${scene.sceneNumber}`, margin, y + 5);
              
              // Draw Image
@@ -428,7 +445,8 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                      doc.addImage(scene.imageUrl, 'JPEG', margin, y + 10, imgWidth, imgHeight);
                  } catch (e) {
                      console.warn('Could not add image for scene ' + scene.sceneNumber, e);
-                     doc.rect(margin, y + 10, imgWidth, imgHeight); // Fallback rect
+                     doc.setDrawColor(200);
+                     doc.rect(margin, y + 10, imgWidth, imgHeight); 
                  }
              } else {
                  // Placeholder rect
@@ -444,27 +462,42 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
              // Draw Texts
              let textY = y + 10; // Align with top of image
              
-             // Description
+             // 1. Action / Description
+             doc.setFont("helvetica", "bold");
+             doc.setFontSize(9);
+             doc.setTextColor(50);
+             doc.text("Action:", textX, textY);
+             textY += 4;
+             
              doc.setFont("helvetica", "normal");
              doc.setFontSize(10);
+             doc.setTextColor(0);
              doc.text(descLines, textX, textY);
              textY += (descLines.length * 5) + 5;
              
-             // Prompt
+             // 2. Visual Prompt
+             doc.setFont("helvetica", "bold");
+             doc.setFontSize(9);
+             doc.setTextColor(50);
+             doc.text("Visual Prompt:", textX, textY);
+             textY += 4;
+             
              doc.setFont("helvetica", "italic");
              doc.setFontSize(8);
              doc.setTextColor(80);
              doc.text(promptLines, textX, textY);
              textY += (promptLines.length * 4) + 5;
-             doc.setTextColor(0);
              
-             // Notes
-             if (scene.notes) {
+             // 3. Notes (if any)
+             if (notesLines.length > 0) {
                  doc.setFont("helvetica", "bold");
                  doc.setFontSize(9);
+                 doc.setTextColor(0);
                  doc.text("Director's Notes:", textX, textY);
                  textY += 4;
+                 
                  doc.setFont("helvetica", "normal");
+                 doc.setFontSize(10);
                  doc.text(notesLines, textX, textY);
              }
              
