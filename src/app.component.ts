@@ -237,7 +237,9 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         // Migration logic for old saves (flat scenes -> groups)
         if (data.scenes && Array.isArray(data.scenes) && !data.sceneGroups) {
           // Migration: Add IDs if missing
-          const migratedScenes = data.scenes.map((s: any) => ({ 
+          const migratedScenes = data.scenes
+            .filter((s: any) => !!s) // Safety filter
+            .map((s: any) => ({ 
              ...s, 
              id: s.id || crypto.randomUUID(),
              initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
@@ -254,11 +256,13 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
           // Ensure imported scenes have IDs and initialState
           const groups = data.sceneGroups.map((g: any) => ({
              ...g,
-             scenes: g.scenes.map((s: any) => ({ 
-                 ...s, 
-                 id: s.id || crypto.randomUUID(),
-                 initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
-             }))
+             scenes: (Array.isArray(g.scenes) ? g.scenes : [])
+                 .filter((s: any) => !!s) // Safety filter for null/undefined scenes
+                 .map((s: any) => ({ 
+                     ...s, 
+                     id: s.id || crypto.randomUUID(),
+                     initialState: s.initialState || { description: s.description, visualPrompt: s.visualPrompt }
+                 }))
           }));
           this.sceneGroups.set(groups);
         }
@@ -326,6 +330,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         y += 15;
         
         for (const scene of group.scenes) {
+             if (!scene) continue; // Skip bad data
              // Scene Layout
              const imgWidth = 80;
              const imgHeight = 45; // Approx 16:9
@@ -336,11 +341,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
              
              doc.setFontSize(10);
              doc.setFont("helvetica", "normal");
-             const descLines = doc.splitTextToSize(scene.description, textWidth);
+             const descLines = doc.splitTextToSize(scene.description || '', textWidth);
              
              doc.setFontSize(8);
              doc.setFont("helvetica", "italic");
-             const promptLines = doc.splitTextToSize("Prompt: " + scene.visualPrompt, textWidth);
+             const promptLines = doc.splitTextToSize("Prompt: " + (scene.visualPrompt || ''), textWidth);
              
              doc.setFontSize(10);
              doc.setFont("helvetica", "normal");
@@ -672,9 +677,27 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
   private moveScene(fromGroupIdx: number, fromSceneIdx: number, toGroupIdx: number, toSceneIdx: number | null) {
     const groups = JSON.parse(JSON.stringify(this.sceneGroups()));
     
+    // Safety check: ensure source exists
+    if (!groups[fromGroupIdx] || !groups[fromGroupIdx].scenes[fromSceneIdx]) {
+      console.warn("Move operation cancelled: Source scene not found.");
+      return;
+    }
+
     // 1. Remove from Source
     const [movedScene] = groups[fromGroupIdx].scenes.splice(fromSceneIdx, 1);
     
+    // Safety check: ensure we actually got a scene
+    if (!movedScene) {
+       console.warn("Move operation cancelled: Failed to extract scene.");
+       return;
+    }
+
+    // Safety check: ensure target group exists
+    if (!groups[toGroupIdx]) {
+        console.warn("Move operation cancelled: Target group not found.");
+        return;
+    }
+
     // 2. Insert into Target
     if (toSceneIdx === null) {
         // Append to end of group
@@ -685,6 +708,9 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
         if (fromGroupIdx === toGroupIdx && fromSceneIdx < toSceneIdx) {
             targetIndex--;
         }
+        
+        // Clamp index to valid bounds
+        targetIndex = Math.max(0, Math.min(targetIndex, groups[toGroupIdx].scenes.length));
         
         groups[toGroupIdx].scenes.splice(targetIndex, 0, movedScene);
     }
@@ -729,21 +755,25 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
             id: crypto.randomUUID(),
             name: g.name || 'Untitled Sequence',
             isCollapsed: false,
-            scenes: (g.scenes || []).map((s: any) => ({
-                id: crypto.randomUUID(),
-                ...s,
-                initialState: { description: s.description, visualPrompt: s.visualPrompt },
-                ...defaults
-            }))
+            scenes: (g.scenes || [])
+                .filter((s: any) => !!s) // Sanitize
+                .map((s: any) => ({
+                    id: crypto.randomUUID(),
+                    ...s,
+                    initialState: { description: s.description, visualPrompt: s.visualPrompt },
+                    ...defaults
+                }))
           }));
       } else {
           // result is flat array of scenes
-          const allScenes = result.map((s: any) => ({ 
-            id: crypto.randomUUID(),
-            ...s, 
-            initialState: { description: s.description, visualPrompt: s.visualPrompt },
-            ...defaults
-          }));
+          const allScenes = result
+              .filter((s: any) => !!s) // Sanitize
+              .map((s: any) => ({ 
+                id: crypto.randomUUID(),
+                ...s, 
+                initialState: { description: s.description, visualPrompt: s.visualPrompt },
+                ...defaults
+              }));
 
           if (strategy === 'single' || allScenes.length === 0) {
               newGroups = [{
@@ -780,7 +810,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                  let currentGroup: SceneGroup | null = null;
                  let lastPageIdx = -1;
                  
-                 allScenes.forEach((scene, i) => {
+                 allScenes.forEach((scene: any, i: number) => {
                      // Best effort mapping: Scene i corresponds to i-th detected header
                      // If we have more scenes than headers (Gemini split a scene), use the last header line
                      // If we have fewer, it's fine.
