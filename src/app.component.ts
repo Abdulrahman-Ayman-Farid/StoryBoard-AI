@@ -579,6 +579,33 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     this.showNotification('Sections merged');
     this.triggerUpdate();
   }
+  
+  duplicateScene(sceneId: string) {
+    this.sceneGroups.update(groups => {
+      const newGroups = [...groups];
+      for (let g = 0; g < newGroups.length; g++) {
+        const group = newGroups[g];
+        const sceneIndex = group.scenes.findIndex(s => s.id === sceneId);
+        
+        if (sceneIndex !== -1) {
+           const originalScene = group.scenes[sceneIndex];
+           const newScene: Scene = {
+             ...JSON.parse(JSON.stringify(originalScene)),
+             id: crypto.randomUUID(),
+             // Keep image and prompt so user can iterate from exact state
+           };
+           
+           const newScenes = [...group.scenes];
+           newScenes.splice(sceneIndex + 1, 0, newScene);
+           newGroups[g] = { ...group, scenes: newScenes };
+           break;
+        }
+      }
+      return newGroups;
+    });
+    this.showNotification('Scene duplicated');
+    this.triggerUpdate();
+  }
 
   // --- Versioning / Snapshots ---
 
@@ -1096,6 +1123,23 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
       errorMessage: undefined,
       progress: 0
     });
+  }
+
+  restoreHistoryItem(sceneId: string, item: { prompt: string, imageUrl?: string }) {
+    const { scene } = this.findSceneById(sceneId);
+    if (!scene) return;
+
+    if (!confirm('Restore this version? Current unsaved changes will be saved to history.')) return;
+
+    // Save current state to history
+    const currentItem = { prompt: scene.visualPrompt, imageUrl: scene.imageUrl };
+    
+    this.updateScene(sceneId, {
+        visualPrompt: item.prompt,
+        imageUrl: item.imageUrl,
+        promptHistory: [...(scene.promptHistory || []), currentItem]
+    });
+    this.showNotification('Restored previous version');
   }
 
   updateSceneNotes(sceneId: string, event: Event) {
