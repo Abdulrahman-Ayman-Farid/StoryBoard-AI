@@ -92,6 +92,35 @@ export class AppComponent {
     return this.selectedAspectRatio().replace(':', '/');
   });
   
+  // Hero Carousel State
+  activeHeroSlideIndex = signal<number>(0);
+  heroSlides = [
+      {
+        image: 'https://picsum.photos/seed/cyberpunk_blade_runner_neon/800/450',
+        scene: 'SCENE 01',
+        description: 'EXT. NEO-TOKYO - RAIN. Neon lights reflect off the wet pavement as KAI speeds through traffic on his bike.',
+        tag: 'Action',
+        colorClass: 'bg-pink-500 text-white shadow-pink-500/50',
+        textClass: 'text-pink-300'
+      },
+      {
+        image: 'https://picsum.photos/seed/purple_aesthetic_synthwave/800/450',
+        scene: 'SCENE 02',
+        description: 'INT. RETRO ARCADE - NIGHT. CRT monitors glow in the haze. A deal is being struck in the shadows.',
+        tag: 'Mid',
+        colorClass: 'bg-purple-500 text-white shadow-purple-500/50',
+        textClass: 'text-purple-300'
+      },
+      {
+        image: 'https://picsum.photos/seed/futuristic_space_station_interior/800/450',
+        scene: 'SCENE 03',
+        description: 'INT. STATION - ZERO G. Debris floats silently past the viewport as the airlock cycles open.',
+        tag: 'Wide',
+        colorClass: 'bg-cyan-500 text-black shadow-cyan-500/50',
+        textClass: 'text-cyan-300'
+      }
+  ];
+  
   // Chat State
   isChatOpen = signal<boolean>(false);
   chatInput = signal<string>('');
@@ -118,6 +147,33 @@ export class AppComponent {
     // Initialize Chat
     this.chatSession = this.geminiService.getChatModel();
     this.addBotMessage("Hello! I'm your Storyboard Assistant. How can I help you with your script today?");
+  }
+
+  // --- Hero Carousel Logic ---
+
+  nextHeroSlide() {
+    this.activeHeroSlideIndex.update(i => (i + 1) % this.heroSlides.length);
+    this.triggerUpdate();
+  }
+
+  getHeroCardClass(index: number): string {
+    const active = this.activeHeroSlideIndex();
+    const len = this.heroSlides.length;
+    // Calculate relative position: 0 (Front), 1 (Next), 2 (Back)
+    const diff = (index - active + len) % len;
+
+    const baseClasses = "absolute inset-0 rounded-2xl overflow-hidden shadow-2xl border transition-all duration-700 ease-out bg-[#0f121d] ";
+    
+    if (diff === 0) {
+        // Front
+        return baseClasses + "z-30 scale-100 opacity-100 rotate-0 translate-x-0 translate-y-0 border-white/20 hover:scale-105 cursor-pointer filter contrast-125 saturate-150";
+    } else if (diff === 1) {
+        // Middle (Next)
+        return baseClasses + "z-20 scale-95 opacity-60 rotate-3 translate-x-4 translate-y-2 border-white/10 mix-blend-hard-light filter contrast-110";
+    } else {
+        // Back (Last)
+        return baseClasses + "z-10 scale-90 opacity-30 rotate-6 translate-x-8 translate-y-4 border-white/5 mix-blend-overlay filter contrast-125 brightness-75";
+    }
   }
 
   // --- Chat Logic ---
