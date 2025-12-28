@@ -410,6 +410,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
              
              // Calculate needed height for text block
              // Layout:
+             // SCENE HEADER (8)
              // Action Label (5)
              // Action Text (lines * 5)
              // Spacer (5)
@@ -419,6 +420,7 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
              // [Notes Label (5) + Text (lines * 5)]
              
              let textBlockHeight = 0;
+             textBlockHeight += 8; // Scene Number Header
              textBlockHeight += 5 + (descLines.length * 5) + 5; // Action section
              textBlockHeight += 4 + (promptLines.length * 4) + 5; // Prompt section
              if (notesLines.length > 0) {
@@ -432,12 +434,6 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                  doc.addPage();
                  y = 20;
              }
-             
-             // Draw Scene Header (Scene Number)
-             doc.setFontSize(12);
-             doc.setFont("helvetica", "bold");
-             doc.setTextColor(0);
-             doc.text(`Scene ${scene.sceneNumber}`, margin, y + 5);
              
              // Draw Image
              if (scene.imageUrl) {
@@ -462,6 +458,13 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
              // Draw Texts
              let textY = y + 10; // Align with top of image
              
+             // 0. Scene Number Header
+             doc.setFont("helvetica", "bold");
+             doc.setFontSize(14);
+             doc.setTextColor(0);
+             doc.text(`SCENE ${scene.sceneNumber}`, textX, textY);
+             textY += 8; // Spacing after header
+
              // 1. Action / Description
              doc.setFont("helvetica", "bold");
              doc.setFontSize(9);
