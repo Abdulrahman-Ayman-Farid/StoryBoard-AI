@@ -262,98 +262,121 @@
     </div>
 } @else {
     <!-- Main App Interface -->
-    <div class="flex h-screen w-full relative z-10 animate-fade-in">
+    <div class="flex h-screen w-full relative z-10 animate-fade-in bg-[#030712]">
         
         <!-- Left Panel: Script & Controls -->
-        <div class="w-[400px] flex flex-col border-r border-white/5 bg-black/20 backdrop-blur-xl h-full flex-shrink-0 transition-all duration-300">
+        <div class="w-[420px] flex flex-col border-r border-white/5 bg-[#050914]/90 backdrop-blur-3xl h-full flex-shrink-0 transition-all duration-300 shadow-[10px_0_30px_-10px_rgba(0,0,0,0.5)] z-20">
             <!-- Header -->
-            <div class="p-5 border-b border-white/5 flex items-center justify-between">
-                <h1 class="font-light text-xl tracking-tight flex items-center gap-2">
-                    <span class="w-2 h-8 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></span>
-                    StoryBoard <span class="font-bold">AI</span>
+            <div class="h-16 px-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                <h1 class="font-light text-lg tracking-tight flex items-center gap-2.5">
+                    <div class="relative w-6 h-6 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg opacity-80 blur-[2px]"></div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-white relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        </svg>
+                    </div>
+                    <span class="text-gray-200 font-medium">StoryBoard <span class="text-indigo-400 font-bold">AI</span></span>
                 </h1>
                 <div class="flex gap-2">
-                    <button (click)="loadSampleScript()" class="text-xs text-white/40 hover:text-white transition-colors" title="Load Sample">Sample</button>
+                    <button (click)="loadSampleScript()" class="text-[10px] font-bold uppercase tracking-wider text-white/30 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors" title="Load Sample">Sample</button>
                 </div>
             </div>
 
             <!-- Script Input -->
-            <div class="flex-1 relative group">
+            <div class="flex-1 relative group bg-gradient-to-b from-transparent to-black/20">
                 <textarea 
                     [value]="scriptText()"
                     (input)="onScriptInput($event)"
-                    class="w-full h-full bg-transparent p-5 resize-none outline-none font-mono text-sm text-gray-300 placeholder-gray-700 leading-relaxed custom-scrollbar"
+                    class="w-full h-full bg-transparent p-6 resize-none outline-none font-mono text-sm text-gray-300 placeholder-gray-700 leading-relaxed custom-scrollbar"
                     placeholder="INT. SPACE STATION - DAY..."></textarea>
                 
                 @if (!scriptText()) {
                     <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                        <div class="text-center p-6">
-                            <p class="text-white/20 text-sm mb-2">Paste your script here</p>
-                            <button (click)="loadSampleScript()" class="pointer-events-auto text-indigo-400 hover:text-indigo-300 text-xs underline">Try a sample</button>
+                        <div class="text-center p-6 max-w-xs">
+                            <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 border border-white/5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            </div>
+                            <p class="text-white/30 text-sm font-light mb-3">Begin by typing your screenplay or pasting it here.</p>
+                            <button (click)="loadSampleScript()" class="pointer-events-auto text-indigo-400 hover:text-indigo-300 text-xs font-medium hover:underline">Load a sample script</button>
                         </div>
                     </div>
                 }
                 
                 <!-- Analysis Stats -->
-                <div class="absolute bottom-4 right-4 text-[10px] text-white/20 font-mono pointer-events-none bg-black/40 px-2 py-1 rounded backdrop-blur-md">
+                <div class="absolute bottom-4 right-4 text-[10px] text-white/30 font-mono pointer-events-none bg-black/60 border border-white/5 px-2 py-1 rounded backdrop-blur-md">
                     {{ wordCount() }} words
                 </div>
             </div>
 
             <!-- Analysis Controls -->
-            <div class="p-5 border-t border-white/5 bg-black/20 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-widest text-white/40 font-bold">Strategy</label>
-                        <select (change)="onGroupingStrategyChange($event)" [value]="selectedGroupingStrategy()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-300 outline-none focus:border-indigo-500/50">
-                            <option value="single">Single Sequence</option>
-                            <option value="smart">Smart AI Analysis</option>
-                            <option value="lines_50">Every 50 Lines</option>
-                            <option value="batch_5">Batch (5 Scenes)</option>
-                        </select>
+            <div class="p-6 border-t border-white/5 bg-[#080c16] space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-1">Strategy</label>
+                        <div class="relative">
+                            <select (change)="onGroupingStrategyChange($event)" [value]="selectedGroupingStrategy()" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-gray-300 outline-none focus:border-indigo-500/50 appearance-none hover:bg-white/10 transition-colors cursor-pointer">
+                                <option value="single">Single Sequence</option>
+                                <option value="smart">Smart Analysis</option>
+                                <option value="lines_50">Every 50 Lines</option>
+                                <option value="batch_5">Batch (5 Scenes)</option>
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-widest text-white/40 font-bold">Aspect Ratio</label>
-                        <select (change)="onAspectRatioChange($event)" [value]="selectedAspectRatio()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-300 outline-none focus:border-indigo-500/50">
-                            <option value="16:9">Cinematic (16:9)</option>
-                            <option value="21:9">Ultra Wide (21:9)</option>
-                            <option value="4:3">TV (4:3)</option>
-                            <option value="1:1">Square (1:1)</option>
-                        </select>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-1">Frame Ratio</label>
+                        <div class="relative">
+                            <select (change)="onAspectRatioChange($event)" [value]="selectedAspectRatio()" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-gray-300 outline-none focus:border-indigo-500/50 appearance-none hover:bg-white/10 transition-colors cursor-pointer">
+                                <option value="16:9">Cinematic (16:9)</option>
+                                <option value="21:9">Ultra Wide (21:9)</option>
+                                <option value="4:3">Classic TV (4:3)</option>
+                                <option value="1:1">Square (1:1)</option>
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <button 
                     (click)="analyzeScript()" 
                     [disabled]="isAnalyzing() || !scriptText()"
-                    class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex justify-center items-center gap-2.5 border border-white/10">
                     @if (isAnalyzing()) {
                         <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Analyzing Script...</span>
+                        <span>Analyzing Narrative...</span>
                     } @else {
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                         </svg>
-                        <span>Generate Storyboard</span>
+                        <span>Analyze & Generate</span>
                     }
                 </button>
             </div>
         </div>
 
         <!-- Right Panel: Storyboard Timeline -->
-        <div class="flex-1 h-full flex flex-col bg-black/5 overflow-hidden">
-            
+        <div class="flex-1 h-full flex flex-col relative bg-[#030712] overflow-hidden">
+            <!-- Subtle Grid Background -->
+            <div class="absolute inset-0 pointer-events-none opacity-[0.03]" 
+                 style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 40px 40px;">
+            </div>
+
             <!-- Top Toolbar -->
-            <div class="h-16 border-b border-white/5 bg-black/20 backdrop-blur-md flex items-center justify-between px-6 flex-shrink-0">
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 text-sm text-gray-400">
-                        <span class="font-bold text-white">{{ totalSceneCount() }}</span> Scenes
+            <div class="h-16 border-b border-white/5 bg-black/40 backdrop-blur-md flex items-center justify-between px-8 flex-shrink-0 z-10 sticky top-0">
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
+                        <span class="text-xs text-gray-400 font-medium">SCENES</span>
+                        <span class="text-sm font-bold text-white bg-white/10 px-1.5 py-0.5 rounded">{{ totalSceneCount() }}</span>
                     </div>
                     <div class="h-4 w-px bg-white/10"></div>
-                    <button (click)="toggleHistory()" class="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/5">
+                    <button (click)="toggleHistory()" class="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-white transition-colors hover:bg-white/5 px-3 py-1.5 rounded-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -362,7 +385,7 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button (click)="exportToPDF()" class="flex items-center gap-2 text-xs font-bold text-black bg-white hover:bg-gray-200 transition-colors px-4 py-2 rounded-lg">
+                    <button (click)="exportToPDF()" class="flex items-center gap-2 text-xs font-bold text-black bg-white hover:bg-gray-200 transition-colors px-4 py-2 rounded-lg shadow-lg shadow-white/5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
@@ -372,22 +395,22 @@
             </div>
 
             <!-- Scrollable Content -->
-            <div #scrollContainer class="flex-1 overflow-y-auto overflow-x-hidden p-8 custom-scrollbar scroll-smooth">
+            <div #scrollContainer class="flex-1 overflow-y-auto overflow-x-hidden p-8 custom-scrollbar scroll-smooth relative z-0">
                 
                 @if (sceneGroups().length === 0 && !isAnalyzing()) {
                     <!-- Main App Empty State -->
-                    <div class="h-full flex flex-col items-center justify-center p-10 animate-fade-in text-white/20">
-                         <div class="w-24 h-24 mb-6 rounded-3xl bg-white/5 flex items-center justify-center animate-pulse">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <div class="h-full flex flex-col items-center justify-center p-10 animate-fade-in">
+                         <div class="w-32 h-32 mb-8 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center animate-pulse shadow-[0_0_50px_rgba(255,255,255,0.02)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                             </svg>
                         </div>
-                        <p class="text-lg font-light">Paste a script in the sidebar to begin</p>
-                        <p class="text-sm text-white/10 mt-2">or load a sample</p>
+                        <h3 class="text-xl font-medium text-white/80 mb-2">Awaiting Screenplay</h3>
+                        <p class="text-sm text-white/30 max-w-sm text-center">Paste your script in the left panel to begin the visualization process.</p>
                     </div>
                 }
 
-                <div class="max-w-5xl mx-auto space-y-12 pb-20">
+                <div class="max-w-5xl mx-auto space-y-16 pb-20">
                     
                     @for (group of sceneGroups(); track group.id; let groupIndex = $index) {
                         <div class="group-container animate-fade-in" 
@@ -396,32 +419,35 @@
                              (drop)="onDrop($event, groupIndex, null)">
                             
                             <!-- Group Header -->
-                            <div class="flex items-center gap-4 mb-6 sticky top-0 z-20 py-4 -my-4 bg-[#050915]/80 backdrop-blur-xl border-b border-white/5">
-                                 <button (click)="toggleGroupCollapse(groupIndex)" class="p-1 hover:bg-white/10 rounded transition-colors text-gray-400">
+                            <div class="flex items-center gap-4 mb-8 sticky top-0 z-30 py-4 -my-4 bg-[#030712]/90 backdrop-blur-xl border-b border-white/5 shadow-xl">
+                                 <button (click)="toggleGroupCollapse(groupIndex)" class="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" [class.-rotate-90]="group.isCollapsed" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                  </button>
-                                 <input 
-                                    [value]="group.name" 
-                                    (change)="updateGroupName(groupIndex, $event)"
-                                    class="bg-transparent text-lg font-bold text-gray-200 outline-none border border-transparent focus:border-white/10 rounded px-2 hover:bg-white/5 transition-colors flex-1"
-                                />
+                                 <div class="flex-1">
+                                    <input 
+                                        [value]="group.name" 
+                                        (change)="updateGroupName(groupIndex, $event)"
+                                        class="bg-transparent text-xl font-bold text-gray-100 outline-none border-b border-transparent focus:border-indigo-500/50 hover:bg-white/5 transition-all px-2 py-1 w-full"
+                                    />
+                                    <div class="text-[10px] text-gray-500 px-2 mt-0.5 uppercase tracking-wider font-bold">Sequence {{ groupIndex + 1 | number:'2.0' }}</div>
+                                 </div>
                                  
                                  <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button (click)="deleteGroup(groupIndex)" class="text-red-400/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-400/10 transition-colors">Delete Section</button>
                                     @if (groupIndex > 0) {
-                                        <button (click)="mergeWithPrevious(groupIndex)" class="text-white/20 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/5 transition-colors">Merge Up</button>
+                                        <button (click)="mergeWithPrevious(groupIndex)" class="text-white/30 hover:text-white text-xs px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors border border-transparent hover:border-white/10">Merge Up</button>
                                     }
+                                    <button (click)="deleteGroup(groupIndex)" class="text-red-400/50 hover:text-red-400 text-xs px-3 py-1.5 rounded-md hover:bg-red-400/10 transition-colors border border-transparent hover:border-red-500/10">Delete</button>
                                  </div>
                             </div>
 
                             @if (!group.isCollapsed) {
-                                <div class="space-y-6">
+                                <div class="space-y-8 pl-4">
                                     @for (scene of group.scenes; track scene.id; let sceneIndex = $index; let last = $last) {
                                       @if(scene) {
                                         <!-- Scene Card -->
-                                        <div class="relative pl-10 group/scene"
+                                        <div class="relative pl-12 group/scene"
                                              draggable="true"
                                              (dragstart)="onDragStart($event, groupIndex, sceneIndex)"
                                              (dragover)="onDragOverScene($event, groupIndex, sceneIndex)"
@@ -429,47 +455,35 @@
                                              (dragend)="onDragEnd($event)">
                                             
                                             <!-- Timeline Connector (Vertical) -->
-                                            <div class="absolute left-[3px] top-0 w-px bg-indigo-500/20 transition-all duration-300"
-                                                 [class.h-full]="last"
-                                                 [class.bg-gradient-to-b]="last"
-                                                 [class.from-indigo-500/20]="last"
-                                                 [class.to-transparent]="last"
-                                                 [class.h-[calc(100%+1.5rem)]]="!last">
+                                            <div class="absolute left-[3px] top-0 w-px bg-gradient-to-b from-indigo-500/30 via-indigo-500/10 to-transparent transition-all duration-300"
+                                                 [class.h-full]="!last"
+                                                 [class.h-[60px]]="last">
                                             </div>
                                             
                                             <!-- Node Dot -->
-                                            <div class="absolute left-0 top-12 w-2 h-2 rounded-full bg-[#0f121d] border border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] z-10"></div>
+                                            <div class="absolute left-0 top-[60px] w-2 h-2 -ml-0.5 rounded-full bg-[#030712] border-2 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)] z-10 transition-transform group-hover/scene:scale-125"></div>
                                             
                                             <!-- Horizontal Connector -->
-                                            <div class="absolute left-[4px] top-[51px] w-10 h-px bg-indigo-500/20"></div>
+                                            <div class="absolute left-[4px] top-[63px] w-12 h-px bg-indigo-500/20"></div>
 
                                             <!-- Drop Indicator -->
                                             @if (dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex) {
-                                                <div class="h-1 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.8)] rounded-full mb-6 animate-pulse"></div>
+                                                <div class="h-1 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.8)] rounded-full mb-8 animate-pulse"></div>
                                             }
                                             
-                                            <!-- Arrow (Between Scenes) -->
-                                            @if (!last) {
-                                                <div class="absolute left-[-5px] -bottom-[18px] z-0 text-indigo-500/40">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M12 5v14M19 12l-7 7-7-7"/>
-                                                    </svg>
-                                                </div>
-                                            }
-
-                                            <div class="bg-[#0f121d] border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-all duration-300 shadow-xl group-hover/scene:shadow-2xl relative z-10">
+                                            <div class="bg-[#0b101b] border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/40 transition-all duration-300 shadow-xl group-hover/scene:shadow-2xl hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-10 group/card">
                                                 
                                                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
                                                     <!-- Image Area -->
-                                                    <div class="lg:col-span-5 xl:col-span-4 bg-black/50 relative group/image border-b lg:border-b-0 lg:border-r border-white/5 min-h-[200px] flex items-center justify-center">
+                                                    <div class="lg:col-span-5 xl:col-span-4 bg-black/50 relative group/image border-b lg:border-b-0 lg:border-r border-white/5 min-h-[220px] flex items-center justify-center overflow-hidden">
                                                         
                                                         @if (scene.imageUrl) {
-                                                            <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-700 group-hover/image:scale-105" loading="lazy">
-                                                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                                                <button (click)="generateImageForScene(scene.id)" class="bg-white text-black text-xs font-bold px-3 py-2 rounded-full transform translate-y-2 group-hover/image:translate-y-0 transition-transform">
+                                                            <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" loading="lazy">
+                                                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
+                                                                <button (click)="generateImageForScene(scene.id)" class="bg-white hover:bg-gray-100 text-black text-xs font-bold px-4 py-2 rounded-full transform translate-y-2 group-hover/image:translate-y-0 transition-all shadow-lg">
                                                                     Regenerate
                                                                 </button>
-                                                                <button (click)="resetScene(scene.id)" class="bg-white/20 backdrop-blur text-white text-xs font-bold px-3 py-2 rounded-full hover:bg-red-500/80 transition-colors transform translate-y-2 group-hover/image:translate-y-0 transition-transform delay-75">
+                                                                <button (click)="resetScene(scene.id)" class="bg-white/10 hover:bg-red-500/80 backdrop-blur text-white text-xs font-bold px-4 py-2 rounded-full transition-all transform translate-y-2 group-hover/image:translate-y-0 delay-75 border border-white/10">
                                                                     Reset
                                                                 </button>
                                                             </div>
@@ -477,107 +491,111 @@
                                                             <div class="flex flex-col items-center justify-center text-center p-6 w-full">
                                                                 @if (scene.isGenerating) {
                                                                     <div class="relative w-16 h-16 mb-4">
-                                                                        <div class="absolute inset-0 rounded-full border-4 border-indigo-500/20"></div>
-                                                                        <div class="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+                                                                        <div class="absolute inset-0 rounded-full border-2 border-indigo-500/20"></div>
+                                                                        <div class="absolute inset-0 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
+                                                                        <div class="absolute inset-0 flex items-center justify-center">
+                                                                            <span class="text-[10px] font-mono text-indigo-400">{{ scene.progress || 0 }}%</span>
+                                                                        </div>
                                                                     </div>
-                                                                    <p class="text-xs font-bold text-indigo-300 animate-pulse">{{ scene.statusMessage || 'Generating...' }}</p>
-                                                                    <div class="w-24 h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
-                                                                        <div class="h-full bg-indigo-500 transition-all duration-300" [style.width.%]="scene.progress || 0"></div>
-                                                                    </div>
+                                                                    <p class="text-xs font-bold text-indigo-300 animate-pulse tracking-wide">{{ scene.statusMessage || 'Dreaming...' }}</p>
                                                                 } @else {
-                                                                    <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover/image:scale-110 transition-transform text-white/20 group-hover/image:text-indigo-400">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <div class="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4 group-hover/image:scale-110 transition-transform duration-300 border border-white/5 group-hover/image:border-indigo-500/30">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white/20 group-hover/image:text-indigo-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                                         </svg>
                                                                     </div>
-                                                                    <button (click)="generateImageForScene(scene.id)" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-colors shadow-lg shadow-indigo-900/20">
+                                                                    <button (click)="generateImageForScene(scene.id)" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-900/20 font-medium tracking-wide">
                                                                         Generate Image
                                                                     </button>
                                                                     @if (scene.errorMessage) {
-                                                                        <p class="text-[10px] text-red-400 mt-2 max-w-[150px]">{{ scene.errorMessage }}</p>
+                                                                        <p class="text-[10px] text-red-400 mt-3 max-w-[150px] bg-red-900/20 px-2 py-1 rounded">{{ scene.errorMessage }}</p>
                                                                     }
                                                                 }
                                                             </div>
                                                         }
                                                         
                                                         <!-- Aspect Ratio Label -->
-                                                        <div class="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 backdrop-blur rounded text-[9px] text-white/40 font-mono">
+                                                        <div class="absolute bottom-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded text-[9px] text-white/50 font-mono border border-white/5 shadow-sm">
                                                             {{ aspectRatioStyle() }}
                                                         </div>
                                                     </div>
 
                                                     <!-- Content Area -->
-                                                    <div class="lg:col-span-7 xl:col-span-8 p-6 relative">
+                                                    <div class="lg:col-span-7 xl:col-span-8 p-6 lg:p-8 relative flex flex-col justify-between">
                                                         
                                                         <!-- Scene Header -->
-                                                        <div class="mb-5">
-                                                            <div class="flex items-center justify-between mb-2">
-                                                                <div class="flex items-center gap-2">
-                                                                    <span class="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold text-indigo-300 tracking-widest uppercase">
-                                                                        Scene {{ scene.sceneNumber | number:'2.0' }}
-                                                                    </span>
-                                                                    <span class="text-[10px] text-white/20 font-medium uppercase tracking-wider">Action</span>
+                                                        <div>
+                                                            <div class="flex items-center justify-between mb-4">
+                                                                <div class="flex items-center gap-3">
+                                                                    <div class="px-2.5 py-1 rounded bg-indigo-500/10 border border-indigo-500/20">
+                                                                        <span class="text-[10px] font-bold text-indigo-300 tracking-widest uppercase">
+                                                                            Scene {{ scene.sceneNumber | number:'2.0' }}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
                                                                 
-                                                                <div class="flex items-center gap-1 opacity-0 group-hover/scene:opacity-100 transition-opacity">
-                                                                    <button (click)="splitGroup(groupIndex, sceneIndex)" class="p-1 hover:text-white text-white/20" title="Split Sequence Here">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" /></svg>
+                                                                <div class="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                                                    <button (click)="splitGroup(groupIndex, sceneIndex)" class="p-1.5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-colors" title="Split Sequence Here">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" /></svg>
                                                                     </button>
-                                                                    <button (click)="regenerateSceneText(scene.id)" [disabled]="scene.isRegeneratingText" class="text-white/20 hover:text-indigo-400 transition-colors p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-50" title="Regenerate Description">
+                                                                    <button (click)="regenerateSceneText(scene.id)" [disabled]="scene.isRegeneratingText" class="text-white/30 hover:text-indigo-400 transition-colors p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50" title="Regenerate Description">
                                                                         @if (scene.isRegeneratingText) {
-                                                                        <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                                             </svg>
                                                                         } @else {
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                                                             </svg>
                                                                         }
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                            <p class="text-gray-300 font-light text-sm leading-relaxed select-text">{{ scene.description }}</p>
+                                                            <p class="text-gray-300 font-light text-sm leading-7 select-text">{{ scene.description }}</p>
                                                         </div>
 
-                                                        <!-- Prompt Box -->
-                                                        <div class="relative group/prompt cursor-help">
-                                                        <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover/prompt:opacity-100 transition-opacity blur-md"></div>
-                                                        <div class="relative bg-black/40 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-                                                            
-                                                            <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
-                                                                <div class="flex items-center gap-3">
-                                                                    <span class="text-[9px] uppercase tracking-[0.15em] text-indigo-400 font-bold select-none">
-                                                                        Visual Prompt
-                                                                    </span>
-                                                                    <button (click)="enhancePromptForScene(scene.id)" 
-                                                                            [disabled]="scene.isEnhancingPrompt || scene.isGenerating"
-                                                                            class="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-[10px] font-medium text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 transition-all disabled:opacity-50 group/enhance">
-                                                                            <span class="tracking-wide">AI Enhance</span>
-                                                                    </button>
+                                                        <div class="space-y-4 mt-6">
+                                                            <!-- Prompt Box -->
+                                                            <div class="relative group/prompt">
+                                                                <div class="relative bg-black/40 p-3 rounded-lg border border-white/5 hover:border-white/10 transition-colors focus-within:border-indigo-500/30 focus-within:bg-black/60">
+                                                                    <div class="flex justify-between items-center mb-2">
+                                                                        <div class="flex items-center gap-3">
+                                                                            <span class="text-[9px] uppercase tracking-[0.15em] text-gray-500 font-bold select-none group-focus-within/prompt:text-indigo-400 transition-colors">
+                                                                                Visual Prompt
+                                                                            </span>
+                                                                        </div>
+                                                                        
+                                                                        <div class="flex items-center gap-2">
+                                                                            @if (scene.promptHistory && scene.promptHistory.length > 0) {
+                                                                                <button (click)="revertToPreviousVersion(scene.id)" class="text-[9px] text-white/30 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-2 py-1 rounded">Undo</button>
+                                                                            }
+                                                                            <button (click)="enhancePromptForScene(scene.id)" 
+                                                                                    [disabled]="scene.isEnhancingPrompt || scene.isGenerating"
+                                                                                    class="flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-[9px] font-bold text-indigo-300 border border-indigo-500/20 hover:border-indigo-500/40 transition-all disabled:opacity-50">
+                                                                                    <span>AI ENHANCE</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <textarea
+                                                                        [value]="scene.visualPrompt"
+                                                                        (change)="updateScenePrompt(scene.id, $event)"
+                                                                        class="w-full bg-transparent text-gray-400 text-xs italic font-serif tracking-wide border-none outline-none resize-none placeholder-white/10 hover:text-gray-300 focus:text-gray-100 transition-colors"
+                                                                        rows="2"
+                                                                    ></textarea>
                                                                 </div>
-                                                                @if (scene.promptHistory && scene.promptHistory.length > 0) {
-                                                                    <button (click)="revertToPreviousVersion(scene.id)" class="text-[10px] text-white/30 hover:text-white transition-colors">Revert</button>
-                                                                }
                                                             </div>
 
-                                                            <textarea
-                                                                [value]="scene.visualPrompt"
-                                                                (change)="updateScenePrompt(scene.id, $event)"
-                                                                class="w-full bg-transparent text-white/60 text-xs italic font-serif tracking-wide border-none outline-none resize-none placeholder-white/20 hover:text-white/80 transition-colors focus:bg-white/5 rounded p-2 -ml-2"
-                                                                rows="3"
-                                                            ></textarea>
-                                                        </div>
-                                                        </div>
-
-                                                        <!-- Notes -->
-                                                        <div class="mt-4 pt-4 border-t border-white/5">
-                                                            <input 
-                                                                [value]="scene.notes || ''"
-                                                                (change)="updateSceneNotes(scene.id, $event)"
-                                                                placeholder="Add director's notes..."
-                                                                class="w-full bg-transparent text-gray-400 text-xs outline-none placeholder-white/10 focus:text-white transition-colors"
-                                                            />
+                                                            <!-- Notes -->
+                                                            <div class="border-t border-white/5 pt-3">
+                                                                <input 
+                                                                    [value]="scene.notes || ''"
+                                                                    (change)="updateSceneNotes(scene.id, $event)"
+                                                                    placeholder="Add specific camera movements or director's notes..."
+                                                                    class="w-full bg-transparent text-gray-500 text-xs outline-none placeholder-white/5 focus:text-white focus:placeholder-white/20 transition-colors"
+                                                                />
+                                                            </div>
                                                         </div>
 
                                                     </div>
@@ -595,7 +613,7 @@
         </div>
         
         <!-- Chat Button -->
-        <button (click)="toggleChat()" class="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-600/40 hover:scale-110 transition-transform z-50">
+        <button (click)="toggleChat()" class="fixed bottom-8 right-8 w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:scale-110 hover:shadow-[0_0_40px_rgba(79,70,229,0.6)] transition-all z-50 border border-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
@@ -603,21 +621,26 @@
         
         <!-- Chat Overlay -->
         @if (isChatOpen()) {
-            <div class="fixed bottom-24 right-6 w-80 h-96 bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-scale-up">
+            <div class="fixed bottom-28 right-8 w-96 h-[32rem] bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-scale-up">
                 <div class="p-4 border-b border-white/5 flex items-center justify-between bg-black/20">
-                    <span class="text-xs font-bold text-white uppercase tracking-wider">Assistant</span>
-                    <button (click)="toggleChat()" class="text-white/30 hover:text-white">
+                    <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        AI Assistant
+                    </span>
+                    <button (click)="toggleChat()" class="text-white/30 hover:text-white transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" #scrollContainer>
+                <div class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-black/20" #scrollContainer>
                     @for (msg of chatMessages(); track $index) {
                         <div [class.text-right]="msg.role === 'user'">
-                            <div class="inline-block p-3 rounded-xl max-w-[85%] text-xs leading-relaxed" 
+                            <div class="inline-block p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed shadow-sm" 
                                  [class.bg-indigo-600]="msg.role === 'user'" 
                                  [class.text-white]="msg.role === 'user'"
-                                 [class.bg-white/10]="msg.role === 'model'"
-                                 [class.text-gray-300]="msg.role === 'model'">
+                                 [class.bg-[#1a1f2e]]="msg.role === 'model'"
+                                 [class.text-gray-300]="msg.role === 'model'"
+                                 [class.border]="msg.role === 'model'"
+                                 [class.border-white-5]="msg.role === 'model'">
                                 {{ msg.text }}
                             </div>
                         </div>
@@ -630,16 +653,16 @@
                         </div>
                     }
                 </div>
-                <div class="p-3 bg-black/20 border-t border-white/5">
-                    <div class="flex gap-2">
+                <div class="p-4 bg-black/40 border-t border-white/5 backdrop-blur-md">
+                    <div class="flex gap-2 relative">
                         <input 
                             [value]="chatInput()"
                             (input)="onChatInput($event)"
                             (keydown.enter)="sendChatMessage()"
                             placeholder="Ask about your script..." 
-                            class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-indigo-500/50"
+                            class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500/50 transition-colors"
                         />
-                        <button (click)="sendChatMessage()" class="p-2 bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors">
+                        <button (click)="sendChatMessage()" class="absolute right-2 top-1.5 p-1.5 bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors shadow-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9-2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>
@@ -651,10 +674,8 @@
 
         <!-- Toast Notification -->
         @if (notification()) {
-            <div class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg shadow-indigo-500/40 text-xs font-bold animate-slide-up z-[100] flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
+            <div class="fixed top-8 left-1/2 -translate-x-1/2 bg-[#1e293b] border border-white/10 text-white px-6 py-3 rounded-full shadow-2xl shadow-black/50 text-xs font-bold animate-slide-up z-[100] flex items-center gap-3 backdrop-blur-md">
+                <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
                 {{ notification() }}
             </div>
         }
