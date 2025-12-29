@@ -597,12 +597,13 @@
 
                                                             <!-- Notes -->
                                                             <div class="border-t border-white/5 pt-3">
-                                                                <input 
+                                                                <textarea 
                                                                     [value]="scene.notes || ''"
-                                                                    (change)="updateSceneNotes(scene.id, $event)"
+                                                                    (input)="updateSceneNotes(scene.id, $event)"
                                                                     placeholder="Add specific camera movements or director's notes..."
-                                                                    class="w-full bg-transparent text-gray-500 text-xs outline-none placeholder-white/5 focus:text-white focus:placeholder-white/20 transition-colors"
-                                                                />
+                                                                    class="w-full bg-transparent text-gray-500 text-xs outline-none placeholder-white/5 focus:text-white focus:placeholder-white/20 transition-colors resize-y min-h-[40px]"
+                                                                    rows="2"
+                                                                ></textarea>
                                                             </div>
                                                             
                                                             <!-- Prompt History -->

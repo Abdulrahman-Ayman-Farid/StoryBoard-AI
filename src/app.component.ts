@@ -501,11 +501,12 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                  if (notesLines.length > 0) {
                      doc.setFont("helvetica", "bold");
                      doc.setFontSize(9);
-                     doc.setTextColor(0);
+                     doc.setTextColor(100); // Gray color for header to distinguish
                      doc.text("Director's Notes:", textX, textY);
                      textY += 4;
                      
                      doc.setFont("helvetica", "normal");
+                     doc.setTextColor(0); // Black for content
                      doc.text(notesLines, textX, textY);
                  }
                  
