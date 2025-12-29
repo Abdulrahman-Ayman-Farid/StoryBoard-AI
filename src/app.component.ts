@@ -72,6 +72,10 @@ export class AppComponent {
   
   isAnalyzing = signal<boolean>(false);
   
+  // Export State
+  isExporting = signal<boolean>(false);
+  exportProgress = signal<number>(0);
+  
   // Computed Properties
   wordCount = computed(() => {
     const text = this.scriptText().trim();
@@ -341,176 +345,192 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     }
   }
 
-  exportToPDF() {
+  async exportToPDF() {
     const jspdf = (window as any).jspdf;
     if (!jspdf) {
         this.showNotification('PDF Library not loaded. Please refresh.');
         return;
     }
 
-    const { jsPDF } = jspdf;
-    const doc = new jsPDF();
-    
-    let y = 20;
-    const margin = 20;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const contentWidth = pageWidth - (margin * 2);
-    const maxPageHeight = doc.internal.pageSize.getHeight();
-    
-    // Title
-    doc.setFontSize(24);
-    doc.text("Storyboard Export", margin, y);
-    y += 10;
-    
-    // Script Info
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y);
-    doc.text(`Total Scenes: ${this.totalSceneCount()}`, margin + 60, y);
-    y += 15;
-    
-    doc.setTextColor(0);
+    this.isExporting.set(true);
+    this.exportProgress.set(0);
+    this.triggerUpdate();
 
-    for (const group of this.sceneGroups()) {
-        // Group Header
-        if (y > maxPageHeight - 30) { doc.addPage(); y = 20; }
+    // Small delay to allow UI to show modal
+    await new Promise(r => setTimeout(r, 50));
+
+    try {
+        const { jsPDF } = jspdf;
+        const doc = new jsPDF();
         
-        // Horizontal Line
-        doc.setDrawColor(200);
-        doc.line(margin, y, pageWidth - margin, y);
+        let y = 20;
+        const margin = 20;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const contentWidth = pageWidth - (margin * 2);
+        const maxPageHeight = doc.internal.pageSize.getHeight();
+        
+        // Title
+        doc.setFontSize(24);
+        doc.text("Storyboard Export", margin, y);
         y += 10;
-
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        doc.text(group.name, margin, y);
+        
+        // Script Info
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y);
+        doc.text(`Total Scenes: ${this.totalSceneCount()}`, margin + 60, y);
         y += 15;
         
-        for (const scene of group.scenes) {
-             if (!scene) continue; // Skip bad data
-             // Scene Layout
-             const imgWidth = 80;
-             const imgHeight = 45; // Approx 16:9
-             
-             // Text setup
-             const textX = margin + imgWidth + 10;
-             const textWidth = contentWidth - imgWidth - 10;
-             
-             // Pre-calculate lines to determine height
-             doc.setFontSize(10);
-             doc.setFont("helvetica", "normal");
-             const descLines = doc.splitTextToSize(scene.description || '', textWidth);
-             
-             doc.setFontSize(8);
-             doc.setFont("helvetica", "italic");
-             const promptLines = doc.splitTextToSize(scene.visualPrompt || '', textWidth);
-             
-             doc.setFontSize(10);
-             doc.setFont("helvetica", "normal");
-             const notesLines = scene.notes ? doc.splitTextToSize(scene.notes, textWidth) : [];
-             
-             // Calculate needed height for text block
-             // Layout:
-             // SCENE HEADER (8)
-             // Action Label (5)
-             // Action Text (lines * 5)
-             // Spacer (5)
-             // Prompt Label (4)
-             // Prompt Text (lines * 4)
-             // Spacer (5)
-             // [Notes Label (5) + Text (lines * 5)]
-             
-             let textBlockHeight = 0;
-             textBlockHeight += 8; // Scene Number Header
-             textBlockHeight += 5 + (descLines.length * 5) + 5; // Action section
-             textBlockHeight += 4 + (promptLines.length * 4) + 5; // Prompt section
-             if (notesLines.length > 0) {
-                 textBlockHeight += 5 + (notesLines.length * 5); // Notes section
-             }
-             
-             const neededHeight = Math.max(imgHeight, textBlockHeight) + 15; // +15 padding bottom
-             
-             // Check Pagination
-             if (y + neededHeight > maxPageHeight - 20) {
-                 doc.addPage();
-                 y = 20;
-             }
-             
-             // Draw Image
-             if (scene.imageUrl) {
-                 try {
-                     doc.addImage(scene.imageUrl, 'JPEG', margin, y + 10, imgWidth, imgHeight);
-                 } catch (e) {
-                     console.warn('Could not add image for scene ' + scene.sceneNumber, e);
-                     doc.setDrawColor(200);
-                     doc.rect(margin, y + 10, imgWidth, imgHeight); 
-                 }
-             } else {
-                 // Placeholder rect
-                 doc.setDrawColor(200);
-                 doc.setFillColor(245);
-                 doc.rect(margin, y + 10, imgWidth, imgHeight, 'FD');
-                 doc.setFontSize(8);
-                 doc.setTextColor(150);
-                 doc.text("No Image Rendered", margin + 25, y + 30);
-                 doc.setTextColor(0);
-             }
-             
-             // Draw Texts
-             let textY = y + 10; // Align with top of image
-             
-             // 0. Scene Number Header
-             doc.setFont("helvetica", "bold");
-             doc.setFontSize(14);
-             doc.setTextColor(0);
-             doc.text(`SCENE ${scene.sceneNumber}`, textX, textY);
-             textY += 8; // Spacing after header
+        doc.setTextColor(0);
 
-             // 1. Action / Description
-             doc.setFont("helvetica", "bold");
-             doc.setFontSize(9);
-             doc.setTextColor(50);
-             doc.text("Action:", textX, textY);
-             textY += 4;
-             
-             doc.setFont("helvetica", "normal");
-             doc.setFontSize(10);
-             doc.setTextColor(0);
-             doc.text(descLines, textX, textY);
-             textY += (descLines.length * 5) + 5;
-             
-             // 2. Visual Prompt
-             doc.setFont("helvetica", "bold");
-             doc.setFontSize(9);
-             doc.setTextColor(50);
-             doc.text("Visual Prompt:", textX, textY);
-             textY += 4;
-             
-             doc.setFont("helvetica", "italic");
-             doc.setFontSize(8);
-             doc.setTextColor(80);
-             doc.text(promptLines, textX, textY);
-             textY += (promptLines.length * 4) + 5;
-             
-             // 3. Notes (if any)
-             if (notesLines.length > 0) {
+        const groups = this.sceneGroups();
+        let totalScenes = 0;
+        groups.forEach(g => totalScenes += g.scenes.length);
+        let processedScenes = 0;
+
+        for (const group of groups) {
+            // Group Header
+            if (y > maxPageHeight - 30) { doc.addPage(); y = 20; }
+            
+            // Horizontal Line
+            doc.setDrawColor(200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 10;
+
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text(group.name, margin, y);
+            y += 15;
+            
+            for (const scene of group.scenes) {
+                 if (!scene) continue; 
+                 
+                 // Process Scene
+                 const imgWidth = 80;
+                 const imgHeight = 45; // Approx 16:9
+                 
+                 const textX = margin + imgWidth + 10;
+                 const textWidth = contentWidth - imgWidth - 10;
+                 
+                 // Pre-calculate lines
+                 doc.setFontSize(10);
+                 doc.setFont("helvetica", "normal");
+                 const descLines = doc.splitTextToSize(scene.description || '', textWidth);
+                 
+                 doc.setFontSize(8);
+                 doc.setFont("helvetica", "italic");
+                 const promptLines = doc.splitTextToSize(scene.visualPrompt || '', textWidth);
+                 
+                 doc.setFontSize(10);
+                 doc.setFont("helvetica", "normal");
+                 const notesLines = scene.notes ? doc.splitTextToSize(scene.notes, textWidth) : [];
+                 
+                 // Calculate Height
+                 let textBlockHeight = 0;
+                 textBlockHeight += 8; // Header
+                 textBlockHeight += 5 + (descLines.length * 5) + 5; 
+                 textBlockHeight += 4 + (promptLines.length * 4) + 5; 
+                 if (notesLines.length > 0) {
+                     textBlockHeight += 5 + (notesLines.length * 5); 
+                 }
+                 
+                 const neededHeight = Math.max(imgHeight, textBlockHeight) + 15; 
+                 
+                 // Pagination
+                 if (y + neededHeight > maxPageHeight - 20) {
+                     doc.addPage();
+                     y = 20;
+                 }
+                 
+                 // Image
+                 if (scene.imageUrl) {
+                     try {
+                         doc.addImage(scene.imageUrl, 'JPEG', margin, y + 10, imgWidth, imgHeight);
+                     } catch (e) {
+                         console.warn('Image error', e);
+                         doc.setDrawColor(200);
+                         doc.rect(margin, y + 10, imgWidth, imgHeight); 
+                     }
+                 } else {
+                     doc.setDrawColor(200);
+                     doc.setFillColor(245);
+                     doc.rect(margin, y + 10, imgWidth, imgHeight, 'FD');
+                     doc.setFontSize(8);
+                     doc.setTextColor(150);
+                     doc.text("No Image Rendered", margin + 25, y + 30);
+                     doc.setTextColor(0);
+                 }
+                 
+                 // Text Rendering
+                 let textY = y + 10;
+                 
+                 // SCENE HEADER
+                 doc.setFont("helvetica", "bold");
+                 doc.setFontSize(14);
+                 doc.setTextColor(0);
+                 doc.text(`SCENE ${scene.sceneNumber}`, textX, textY);
+                 textY += 8;
+
+                 // Action
                  doc.setFont("helvetica", "bold");
                  doc.setFontSize(9);
-                 doc.setTextColor(0);
-                 doc.text("Director's Notes:", textX, textY);
+                 doc.setTextColor(50);
+                 doc.text("Action:", textX, textY);
                  textY += 4;
                  
                  doc.setFont("helvetica", "normal");
                  doc.setFontSize(10);
-                 doc.text(notesLines, textX, textY);
-             }
-             
-             y += neededHeight;
+                 doc.setTextColor(0);
+                 doc.text(descLines, textX, textY);
+                 textY += (descLines.length * 5) + 5;
+                 
+                 // Prompt
+                 doc.setFont("helvetica", "bold");
+                 doc.setFontSize(9);
+                 doc.setTextColor(50);
+                 doc.text("Visual Prompt:", textX, textY);
+                 textY += 4;
+                 
+                 doc.setFont("helvetica", "italic");
+                 doc.setFontSize(8);
+                 doc.setTextColor(80);
+                 doc.text(promptLines, textX, textY);
+                 textY += (promptLines.length * 4) + 5;
+                 
+                 // Notes
+                 if (notesLines.length > 0) {
+                     doc.setFont("helvetica", "bold");
+                     doc.setFontSize(9);
+                     doc.setTextColor(0);
+                     doc.text("Director's Notes:", textX, textY);
+                     textY += 4;
+                     
+                     doc.setFont("helvetica", "normal");
+                     doc.text(notesLines, textX, textY);
+                 }
+                 
+                 y += neededHeight;
+                 
+                 // Async Yield
+                 processedScenes++;
+                 if (processedScenes % 5 === 0) {
+                     this.exportProgress.set(Math.round((processedScenes / totalScenes) * 100));
+                     this.triggerUpdate();
+                     await new Promise(r => setTimeout(r, 0));
+                 }
+            }
+            y += 10;
         }
-        y += 10; // Extra space between groups
+        
+        doc.save("storyboard-export.pdf");
+        this.showNotification('PDF Exported Successfully');
+    } catch (e) {
+        console.error(e);
+        this.showNotification('Export Failed');
+    } finally {
+        this.isExporting.set(false);
+        this.triggerUpdate();
     }
-    
-    doc.save("storyboard-export.pdf");
-    this.showNotification('PDF Exported Successfully');
   }
 
   showNotification(message: string) {

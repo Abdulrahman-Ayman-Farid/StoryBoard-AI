@@ -402,7 +402,7 @@
                     <div class="h-full flex flex-col items-center justify-center p-10 animate-fade-in">
                          <div class="w-32 h-32 mb-8 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center animate-pulse shadow-[0_0_50px_rgba(255,255,255,0.02)]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                             </svg>
                         </div>
                         <h3 class="text-xl font-medium text-white/80 mb-2">Awaiting Screenplay</h3>
@@ -740,6 +740,28 @@
                                 </div>
                             </div>
                         }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Export Progress Overlay -->
+        @if (isExporting()) {
+            <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center animate-fade-in">
+                <div class="w-full max-w-md p-8 bg-[#0f121d] border border-white/10 rounded-2xl shadow-2xl text-center space-y-6">
+                    <div class="relative w-20 h-20 mx-auto">
+                         <div class="absolute inset-0 rounded-full border-4 border-indigo-500/20"></div>
+                         <div class="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+                         <div class="absolute inset-0 flex items-center justify-center">
+                             <span class="text-lg font-bold text-white font-mono">{{ exportProgress() }}%</span>
+                         </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-2">Exporting Storyboard</h3>
+                        <p class="text-white/40 text-sm">Rendering PDF... Please wait.</p>
+                    </div>
+                    <div class="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                        <div class="h-full bg-indigo-500 transition-all duration-300" [style.width.%]="exportProgress()"></div>
                     </div>
                 </div>
             </div>
