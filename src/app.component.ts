@@ -472,11 +472,11 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
                  doc.text(`SCENE ${scene.sceneNumber}`, textX, textY);
                  textY += 8;
 
-                 // Action
+                 // Description (Explicitly labeled)
                  doc.setFont("helvetica", "bold");
                  doc.setFontSize(9);
                  doc.setTextColor(50);
-                 doc.text("Action:", textX, textY);
+                 doc.text("Description:", textX, textY);
                  textY += 4;
                  
                  doc.setFont("helvetica", "normal");
