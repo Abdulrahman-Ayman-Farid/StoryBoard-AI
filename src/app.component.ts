@@ -12,6 +12,7 @@ interface Scene {
   isGenerating?: boolean;
   isRegeneratingText?: boolean;
   isEnhancingPrompt?: boolean;
+  isEditingDescription?: boolean; // New: Track editing state
   statusMessage?: string;
   errorMessage?: string; 
   promptHistory?: Array<{ prompt: string, imageUrl?: string }>;
@@ -1061,6 +1062,23 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
        promptHistory: [...(scene.promptHistory || []), historyItem]
     });
   }
+
+  // --- Inline Description Editing ---
+
+  enableDescriptionEdit(sceneId: string) {
+    this.updateScene(sceneId, { isEditingDescription: true });
+  }
+
+  saveDescription(sceneId: string, event: Event) {
+    const val = (event.target as HTMLTextAreaElement).value;
+    this.updateScene(sceneId, { description: val, isEditingDescription: false });
+  }
+
+  cancelDescriptionEdit(sceneId: string) {
+    this.updateScene(sceneId, { isEditingDescription: false });
+  }
+
+  // --- End Inline Description Editing ---
 
   async enhancePromptForScene(sceneId: string) {
     const { scene } = this.findSceneById(sceneId);

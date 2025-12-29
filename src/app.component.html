@@ -23,7 +23,7 @@
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                         </svg>
                     </div>
                     <span class="font-bold text-lg tracking-tight">StoryBoard <span class="font-light text-indigo-400">AI</span></span>
@@ -546,6 +546,11 @@
                                                                     <button (click)="splitGroup(groupIndex, sceneIndex)" class="p-1.5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-colors" title="Split Sequence Here">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" /></svg>
                                                                     </button>
+                                                                    <button (click)="enableDescriptionEdit(scene.id)" class="p-1.5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-colors" title="Edit Description">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                        </svg>
+                                                                    </button>
                                                                     <button (click)="regenerateSceneText(scene.id)" [disabled]="scene.isRegeneratingText" class="text-white/30 hover:text-indigo-400 transition-colors p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50" title="Regenerate Description">
                                                                         @if (scene.isRegeneratingText) {
                                                                         <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -560,7 +565,25 @@
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                            <p class="text-gray-300 font-light text-sm leading-7 select-text">{{ scene.description }}</p>
+                                                            @if (scene.isEditingDescription) {
+                                                                <textarea 
+                                                                    [value]="scene.description"
+                                                                    (blur)="saveDescription(scene.id, $event)"
+                                                                    (keydown.escape)="cancelDescriptionEdit(scene.id)"
+                                                                    (keydown.enter.ctrl)="saveDescription(scene.id, $event)"
+                                                                    class="w-full bg-black/40 text-gray-300 font-light text-sm leading-7 p-3 rounded-lg border border-indigo-500/50 outline-none resize-none focus:bg-black/60 shadow-inner"
+                                                                    rows="4"
+                                                                    autofocus
+                                                                ></textarea>
+                                                                <div class="text-[9px] text-gray-500 mt-1 flex justify-end gap-2">
+                                                                    <span>ESC to cancel</span>
+                                                                    <span>CTRL+ENTER to save</span>
+                                                                </div>
+                                                            } @else {
+                                                                <p (dblclick)="enableDescriptionEdit(scene.id)" class="text-gray-300 font-light text-sm leading-7 select-text cursor-text border border-transparent hover:border-white/5 rounded p-1 -m-1 transition-colors" title="Double click to edit">
+                                                                    {{ scene.description }}
+                                                                </p>
+                                                            }
                                                         </div>
 
                                                         <div class="space-y-4 mt-6">
