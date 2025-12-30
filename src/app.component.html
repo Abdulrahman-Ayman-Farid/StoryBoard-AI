@@ -416,8 +416,8 @@
                 <div class="max-w-5xl mx-auto space-y-16 pb-20">
                     
                     @for (group of sceneGroups(); track group.id; let groupIndex = $index) {
-                        <div class="group-container animate-fade-in" 
-                             [class.opacity-50]="dragOverGroupIndex() === groupIndex"
+                        <div class="group-container animate-fade-in transition-colors duration-300 rounded-2xl" 
+                             [class.bg-indigo-900/10]="dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === null"
                              (dragover)="onDragOverGroup($event, groupIndex)" 
                              (drop)="onDrop($event, groupIndex, null)">
                             
@@ -446,9 +446,21 @@
                             </div>
 
                             @if (!group.isCollapsed) {
-                                <div class="space-y-8 pl-4">
+                                <div class="space-y-8 pl-4 pb-4">
                                     @for (scene of group.scenes; track scene.id; let sceneIndex = $index; let last = $last) {
                                       @if(scene) {
+                                        <!-- Drop Indicator (Before Scene) -->
+                                        @if (dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex) {
+                                            <div class="w-full h-[220px] rounded-2xl border-2 border-dashed border-indigo-500/50 bg-indigo-500/5 backdrop-blur-sm flex flex-col items-center justify-center gap-3 mb-8 animate-pulse ml-12">
+                                                <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                                    </svg>
+                                                </div>
+                                                <span class="text-indigo-300 font-medium text-sm">Move Scene Here</span>
+                                            </div>
+                                        }
+
                                         <!-- Scene Card -->
                                         <div class="relative pl-12 group/scene"
                                              draggable="true"
@@ -469,10 +481,6 @@
                                             <!-- Horizontal Connector -->
                                             <div class="absolute left-[4px] top-[63px] w-12 h-px bg-indigo-500/20"></div>
 
-                                            <!-- Drop Indicator -->
-                                            @if (dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === sceneIndex) {
-                                                <div class="h-1 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.8)] rounded-full mb-8 animate-pulse"></div>
-                                            }
                                             
                                             <div class="bg-[#0b101b] border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/40 transition-all duration-300 shadow-xl group-hover/scene:shadow-2xl hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-10 group/card">
                                                 
@@ -567,17 +575,17 @@
                                                             </div>
                                                             @if (scene.isEditingDescription) {
                                                                 <textarea 
+                                                                    #descInput
                                                                     [value]="scene.description"
-                                                                    (blur)="saveDescription(scene.id, $event)"
                                                                     (keydown.escape)="cancelDescriptionEdit(scene.id)"
-                                                                    (keydown.enter.ctrl)="saveDescription(scene.id, $event)"
+                                                                    (keydown.control.enter)="saveDescription(scene.id, descInput.value)"
                                                                     class="w-full bg-black/40 text-gray-300 font-light text-sm leading-7 p-3 rounded-lg border border-indigo-500/50 outline-none resize-none focus:bg-black/60 shadow-inner"
                                                                     rows="4"
                                                                     autofocus
                                                                 ></textarea>
-                                                                <div class="text-[9px] text-gray-500 mt-1 flex justify-end gap-2">
-                                                                    <span>ESC to cancel</span>
-                                                                    <span>CTRL+ENTER to save</span>
+                                                                <div class="flex items-center justify-end gap-2 mt-2">
+                                                                    <button (click)="cancelDescriptionEdit(scene.id)" class="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors">Cancel</button>
+                                                                    <button (click)="saveDescription(scene.id, descInput.value)" class="px-4 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors shadow-lg">Save</button>
                                                                 </div>
                                                             } @else {
                                                                 <p (dblclick)="enableDescriptionEdit(scene.id)" class="text-gray-300 font-light text-sm leading-7 select-text cursor-text border border-transparent hover:border-white/5 rounded p-1 -m-1 transition-colors" title="Double click to edit">
@@ -663,6 +671,13 @@
                                             </div>
                                         </div>
                                       }
+                                    }
+                                    
+                                    <!-- Drop Placeholder Append -->
+                                    @if (dragOverGroupIndex() === groupIndex && dragOverSceneIndex() === null) {
+                                        <div class="w-full h-[100px] rounded-2xl border-2 border-dashed border-indigo-500/30 bg-indigo-500/5 backdrop-blur-sm flex items-center justify-center gap-3 mt-4 ml-12 animate-pulse">
+                                            <span class="text-indigo-400/70 font-medium text-sm uppercase tracking-widest">Add to end of sequence</span>
+                                        </div>
                                     }
                                 </div>
                             }

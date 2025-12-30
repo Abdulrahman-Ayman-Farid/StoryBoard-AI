@@ -1069,9 +1069,8 @@ A black flying vehicle descends silently from the smog, landing on the roof.`;
     this.updateScene(sceneId, { isEditingDescription: true });
   }
 
-  saveDescription(sceneId: string, event: Event) {
-    const val = (event.target as HTMLTextAreaElement).value;
-    this.updateScene(sceneId, { description: val, isEditingDescription: false });
+  saveDescription(sceneId: string, value: string) {
+    this.updateScene(sceneId, { description: value, isEditingDescription: false });
   }
 
   cancelDescriptionEdit(sceneId: string) {
