@@ -470,16 +470,31 @@
                                              (dragend)="onDragEnd($event)">
                                             
                                             <!-- Timeline Connector (Vertical) -->
-                                            <div class="absolute left-[3px] top-0 w-px bg-gradient-to-b from-indigo-500/30 via-indigo-500/10 to-transparent transition-all duration-300"
+                                            <div class="absolute left-[3px] top-0 w-px transition-all duration-300"
                                                  [class.h-full]="!last"
-                                                 [class.h-[60px]]="last">
+                                                 [class.h-[60px]]="last"
+                                                 [class.bg-indigo-500/20]="!last"
+                                                 [class.bg-gradient-to-b]="last"
+                                                 [class.from-indigo-500/20]="last"
+                                                 [class.to-transparent]="last">
+                                                 
+                                                 @if (!last) {
+                                                    <!-- Mid-point flow indicator -->
+                                                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-0.5 opacity-50">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-indigo-500 w-3 h-3">
+                                                            <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </div>
+                                                 }
                                             </div>
                                             
                                             <!-- Node Dot -->
                                             <div class="absolute left-0 top-[60px] w-2 h-2 -ml-0.5 rounded-full bg-[#030712] border-2 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)] z-10 transition-transform group-hover/scene:scale-125"></div>
                                             
                                             <!-- Horizontal Connector -->
-                                            <div class="absolute left-[4px] top-[63px] w-12 h-px bg-indigo-500/20"></div>
+                                            <div class="absolute left-[4px] top-[63px] w-12 h-px bg-indigo-500/20 flex items-center justify-end">
+                                                <div class="w-1 h-1 rounded-full bg-indigo-500/40"></div>
+                                            </div>
 
                                             
                                             <div class="bg-[#0b101b] border border-white/5 rounded-2xl overflow-hidden hover:border-indigo-500/40 transition-all duration-300 shadow-xl group-hover/scene:shadow-2xl hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative z-10 group/card">
@@ -488,6 +503,11 @@
                                                     <!-- Image Area -->
                                                     <div class="lg:col-span-5 xl:col-span-4 bg-black/50 relative group/image border-b lg:border-b-0 lg:border-r border-white/5 min-h-[220px] flex items-center justify-center overflow-hidden">
                                                         
+                                                        <!-- Scene Number Overlay -->
+                                                        <div class="absolute top-3 left-3 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold text-white border border-white/10 shadow-lg z-20 pointer-events-none font-mono">
+                                                            SCENE {{ scene.sceneNumber }}
+                                                        </div>
+
                                                         @if (scene.imageUrl) {
                                                             <img [src]="scene.imageUrl" class="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" loading="lazy">
                                                             <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
